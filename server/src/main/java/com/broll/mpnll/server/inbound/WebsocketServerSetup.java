@@ -4,7 +4,6 @@ package com.broll.mpnll.server.inbound;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -14,7 +13,8 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 public final class WebsocketServerSetup {
 
     public  static Channel init(
-        SetupContext context
+        SetupContext context,
+        int port
     ) throws InterruptedException {
         ServerBootstrap b = new ServerBootstrap();
         b.group(context.bossGroup, context.workerGroup)
@@ -28,13 +28,13 @@ public final class WebsocketServerSetup {
                         new HttpResponseEncoder(),
                         new ProtobufWebSocketInboundHandler(
                             context.clientSessionRegistry,
-                            context.protobufMessageRegistry,
+                            context.messageRegistry,
                             context.messageListener
                         )
                     );
                 }
             });
-        return  b.bind(8081).sync().channel();
+        return  b.bind(port).sync().channel();
     }
 
 }

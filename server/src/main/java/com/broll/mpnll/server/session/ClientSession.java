@@ -1,6 +1,6 @@
 package com.broll.mpnll.server.session;
 
-import com.broll.mpnll.server.ProtobufMessageRegistry;
+import com.broll.mpnll.message.MessageRegistry;
 import com.broll.mpnll.server.inbound.ByteBufUtils;
 import com.broll.mpnll.server.inbound.ClientInboundHandler;
 import com.google.protobuf.Message;
@@ -9,12 +9,12 @@ import io.netty.channel.ChannelHandlerContext;
 
 public class ClientSession {
 
-    private ProtobufMessageRegistry messageRegistry;
-    private ChannelHandlerContext context;
-    private ClientInboundHandler handler;
+    private final MessageRegistry messageRegistry;
+    private final ChannelHandlerContext context;
+    private final ClientInboundHandler handler;
 
     public ClientSession(
-        ProtobufMessageRegistry messageRegistry,
+        MessageRegistry messageRegistry,
         ChannelHandlerContext context,
         ClientInboundHandler handler) {
         this.messageRegistry = messageRegistry;

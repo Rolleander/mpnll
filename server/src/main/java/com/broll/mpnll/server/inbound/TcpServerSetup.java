@@ -11,7 +11,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 public final class TcpServerSetup {
 
     public  static Channel init(
-        SetupContext context
+        SetupContext context,
+        int port
     ) throws InterruptedException {
         ServerBootstrap b = new ServerBootstrap();
         b.group(context.bossGroup, context.workerGroup)
@@ -24,13 +25,13 @@ public final class TcpServerSetup {
                     ch.pipeline().addLast(
                         new ProtobufTcpInboundHandler(
                             context.clientSessionRegistry,
-                            context.protobufMessageRegistry,
+                            context.messageRegistry,
                             context.messageListener
                         )
                     );
                 }
             });
-        return b.bind(8080).sync().channel();
+        return b.bind(port).sync().channel();
     }
 
 }

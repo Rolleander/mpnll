@@ -4,19 +4,18 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.buffer.ByteBuf;
 
-import com.broll.mpnll.server.ProtobufMessageRegistry;
+import com.broll.mpnll.message.MessageRegistry;
 import com.broll.mpnll.server.session.ClientSession;
 import com.broll.mpnll.server.session.ClientSessionRegistry;
-import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 
 public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteBuf> implements ClientInboundHandler{
 
     private ClientSessionRegistry clientSessionRegistry;
-    private ProtobufMessageRegistry messageRegistry;
+    private MessageRegistry messageRegistry;
     private MessageListener messageListener;
 
-    public ProtobufTcpInboundHandler(ClientSessionRegistry clientSessionRegistry, ProtobufMessageRegistry messageRegistry, MessageListener messageListener) {
+    public ProtobufTcpInboundHandler(ClientSessionRegistry clientSessionRegistry, MessageRegistry messageRegistry, MessageListener messageListener) {
         this.clientSessionRegistry = clientSessionRegistry;
         this.messageRegistry = messageRegistry;
         this.messageListener = messageListener;
