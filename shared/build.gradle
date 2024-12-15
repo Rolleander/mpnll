@@ -1,0 +1,6 @@
+eclipse.project.name = appName + '-shared'
+
+dependencies {
+  api 'com.google.protobuf:protobuf-java:3.21.12'
+
+}
