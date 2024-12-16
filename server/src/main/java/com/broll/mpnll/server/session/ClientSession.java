@@ -1,7 +1,7 @@
 package com.broll.mpnll.server.session;
 
 import com.broll.mpnll.message.MessageRegistry;
-import com.broll.mpnll.server.inbound.ByteBufUtils;
+import com.broll.mpnll.message.MessageUtils;
 import com.broll.mpnll.server.inbound.ClientInboundHandler;
 import com.google.protobuf.Message;
 
@@ -22,12 +22,12 @@ public class ClientSession {
         this.handler = handler;
     }
 
-    public void send(byte[] data){
+    public void send(byte[] data) {
         this.handler.send(this.context, data);
     }
 
-    public void send(Message message){
+    public void send(Message message) {
         int type = messageRegistry.getType(message);
-        this.send(ByteBufUtils.toMessageBytes(type, message));
+        this.send(MessageUtils.toMessageBytes(type, message));
     }
 }

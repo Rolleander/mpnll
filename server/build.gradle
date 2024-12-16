@@ -1,58 +1,20 @@
-
 plugins {
   id 'application'
   id 'com.google.protobuf' version '0.9.3'
 }
 
-java.sourceCompatibility = 8
-java.targetCompatibility = 8
-if (JavaVersion.current().isJava9Compatible()) {
-        compileJava.options.release.set(8)
-}
 
 mainClassName = 'com.broll.mpnll.server.ServerLauncher'
 application.setMainClass(mainClassName)
-eclipse.project.name = appName + '-server'
 
 dependencies {
-  // Netty Core (for TCP and WebSocket)
-  implementation 'io.netty:netty-all:4.1.74.Final'
-
-  // You can also include these individual components if you need more granular control
-  implementation 'io.netty:netty-codec-http:4.1.74.Final' // For HTTP and WebSocket support
-  implementation 'io.netty:netty-codec:4.1.74.Final'      // For codec support
-  implementation 'io.netty:netty-transport:4.1.74.Final'   // For transport layer
-  implementation 'io.netty:netty-buffer:4.1.74.Final'      // For buffer support
-  implementation 'io.netty:netty-handler:4.1.74.Final'     // For various handlers
-
+  implementation libs.netty.all
+  implementation libs.netty.codec
+  implementation libs.netty.codec.http
+  implementation libs.netty.transport
+  implementation libs.netty.buffer
+  implementation libs.netty.handler
 
   implementation project(':shared')
-
-
-
 }
 
-jar {
-  archiveBaseName.set(appName)
-// the duplicatesStrategy matters starting in Gradle 7.0; this setting works.
-  duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
-  dependsOn configurations.runtimeClasspath
-  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-// these "exclude" lines remove some unnecessary duplicate files in the output JAR.
-  exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
-  }
-// setting the manifest makes the JAR runnable.
-  manifest {
-    attributes 'Main-Class': project.mainClassName
-  }
-// this last step may help on some OSes that need extra instruction to make runnable JARs.
-  doLast {
-    file(archiveFile).setExecutable(true, false)
-  }
-}
-
-// Equivalent to the jar task; here for compatibility with gdx-setup.
-task dist(dependsOn: [jar]) {
-}

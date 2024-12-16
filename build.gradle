@@ -15,44 +15,21 @@ buildscript {
 }
 
 allprojects {
-  apply plugin: 'eclipse'
-  apply plugin: 'idea'
+  apply plugin: 'java-library'
 
-  // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
-  idea {
-    module {
-      outputDir file('build/classes/java/main')
-      testOutputDir file('build/classes/java/test')
-    }
-  }
+  java.sourceCompatibility = 8
+  java.targetCompatibility = 8
 }
 
 configure(subprojects) {
   apply plugin: 'java-library'
   sourceCompatibility = 8
-
-  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
-  // The article can be helpful when using assets.txt in your project.
-  tasks.register('generateAssetList') {
-    inputs.dir("${project.rootDir}/assets/")
-    // projectFolder/assets
-    File assetsFolder = new File("${project.rootDir}/assets/")
-    // projectFolder/assets/assets.txt
-    File assetsFile = new File(assetsFolder, "assets.txt")
-    // delete that file in case we've already created it
-    assetsFile.delete()
-
-    // iterate through all files inside that folder
-    // convert it to a relative path
-    // and append it to the file assets.txt
-    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
-      assetsFile.append(it + "\n")
-    }
-  }
-  processResources.dependsOn 'generateAssetList'
-
   compileJava {
+    options.encoding = 'UTF-8'
     options.incremental = true
+  }
+  compileTestJava {
+    options.encoding = 'UTF-8'
   }
 }
 
@@ -69,5 +46,3 @@ subprojects {
     maven { url 'https://jitpack.io' }
   }
 }
-
-eclipse.project.name = 'mpnll' + '-parent'

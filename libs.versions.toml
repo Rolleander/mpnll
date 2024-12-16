@@ -1,0 +1,17 @@
+[versions]
+protobuf = "3.21.12"
+netty = "4.1.74.Final"
+gwt = "2.9.0"
+
+[libraries]
+protobuf = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+
+netty-all = { module = "io.netty:netty-all", version.ref = "netty" }
+netty-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty" }
+netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
+netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
+netty-buffer = { module = "io.netty:netty-buffer", version.ref = "netty" }
+netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
+
+gwt-user = { module = "com.google.gwt:gwt-user", version.ref = "gwt" }
+gwt-dev = { module = "com.google.gwt:gwt-dev", version.ref = "gwt" }

@@ -1,0 +1,6 @@
+dependencies {
+  implementation project(':client')
+  implementation libs.gwt.dev
+  implementation libs.gwt.user
+}
+
