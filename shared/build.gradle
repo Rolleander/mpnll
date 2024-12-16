@@ -1,3 +1,28 @@
+plugins {
+  alias libs.plugins.protobuf
+}
+
 dependencies {
-  api libs.protobuf
+  api libs.protobuf.java
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir "$buildDir/generated/source/proto/main/java"
+    }
+  }
+}
+
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:3.21.12"
+  }
+  generateProtoTasks {
+    all().configureEach { task ->
+      task.builtins {
+        java {}
+      }
+    }
+  }
 }

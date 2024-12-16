@@ -1,8 +1,4 @@
-package com.broll.mpnll.desktop;
-
-import com.broll.mpnll.client.ClientConnectionListener;
-import com.broll.mpnll.client.NativeClient;
-import com.broll.mpnll.client.NativeClientRegistry;
+package com.broll.mpnll.client;
 
 public class MpnllTcpClient implements NativeClient {
 
@@ -22,7 +18,7 @@ public class MpnllTcpClient implements NativeClient {
 
     @Override
     public void send(byte[] data) {
-        
+
     }
 
     @Override
