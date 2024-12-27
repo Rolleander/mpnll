@@ -1,10 +1,10 @@
 package com.broll.mpnll.server.inbound;
 
-import com.broll.mpnll.server.session.ClientSession;
+import com.broll.mpnll.server.connection.ClientConnection;
 import com.google.protobuf.Message;
 
 public interface MessageListener {
 
-    void received (ClientSession session, Message message);
+    void received(ClientConnection connection, Message message);
 
 }

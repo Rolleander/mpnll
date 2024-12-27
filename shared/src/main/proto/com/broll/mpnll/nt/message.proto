@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-option java_multiple_files = true;
-option java_package = "com.broll.mpnll.nt";
-
-message TestMessage {
-    string name = 1;
-    int32 id = 2;
-}

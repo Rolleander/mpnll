@@ -10,7 +10,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 public final class TcpServerSetup {
 
-    public  static Channel init(
+    public static Channel init(
         SetupContext context,
         int port
     ) throws InterruptedException {
@@ -24,7 +24,7 @@ public final class TcpServerSetup {
                 public void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline().addLast(
                         new ProtobufTcpInboundHandler(
-                            context.clientSessionRegistry,
+                            context.clientConnectionRegistry,
                             context.messageRegistry,
                             context.messageListener
                         )

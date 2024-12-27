@@ -6,6 +6,11 @@ import java.nio.ByteBuffer;
 
 public final class MessageUtils {
 
+    public static byte[] toMessageBytes(MessageRegistry messageRegistry, Message message) {
+        int type = messageRegistry.getType(message);
+        return MessageUtils.toMessageBytes(type, message);
+    }
+
     public static byte[] toMessageBytes(int type, Message message) {
         byte[] data = message.toByteArray();
         ByteBuffer buffer = ByteBuffer.allocate(4 + data.length);

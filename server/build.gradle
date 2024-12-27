@@ -15,6 +15,13 @@ dependencies {
   implementation libs.netty.buffer
   implementation libs.netty.handler
 
+  implementation libs.annotations
+  implementation libs.commons.io
+  implementation libs.commons.lang
+  implementation libs.commons.collections
+  implementation libs.guava
+  implementation libs.kryo
+  
   implementation project(':shared')
 }
 

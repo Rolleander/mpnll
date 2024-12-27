@@ -14,12 +14,14 @@ public class MessageRegistryImpl implements MessageRegistry {
     private Map<Descriptors.Descriptor, Integer> types = new HashMap<>();
     private Map<Integer, Parser> parsers = new HashMap<>();
 
-    public MessageRegistryImpl(){}
+    public MessageRegistryImpl() {
+    }
 
-    public <T extends Message> void  register(Message.Builder builder, Parser<T> parser){
+    public void register(Message.Builder builder) {
+        Parser parser = builder.getDefaultInstanceForType().getParserForType();
         parsers.put(registerIndex, parser);
-        types.put(builder.getDescriptorForType(), registerIndex  );
-        registerIndex ++;
+        types.put(builder.getDescriptorForType(), registerIndex);
+        registerIndex++;
     }
 
     @Override

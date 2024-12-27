@@ -1,22 +1,22 @@
 package com.broll.mpnll.server.inbound;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.buffer.ByteBuf;
-
 import com.broll.mpnll.message.MessageRegistry;
-import com.broll.mpnll.server.session.ClientSession;
-import com.broll.mpnll.server.session.ClientSessionRegistry;
+import com.broll.mpnll.server.connection.ClientConnection;
+import com.broll.mpnll.server.connection.ClientConnectionRegistry;
 import com.google.protobuf.Message;
 
-public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteBuf> implements ClientInboundHandler{
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
-    private ClientSessionRegistry clientSessionRegistry;
+public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteBuf> implements ClientInboundHandler {
+
+    private ClientConnectionRegistry clientConnectionRegistry;
     private MessageRegistry messageRegistry;
     private MessageListener messageListener;
 
-    public ProtobufTcpInboundHandler(ClientSessionRegistry clientSessionRegistry, MessageRegistry messageRegistry, MessageListener messageListener) {
-        this.clientSessionRegistry = clientSessionRegistry;
+    public ProtobufTcpInboundHandler(ClientConnectionRegistry clientConnectionRegistry, MessageRegistry messageRegistry, MessageListener messageListener) {
+        this.clientConnectionRegistry = clientConnectionRegistry;
         this.messageRegistry = messageRegistry;
         this.messageListener = messageListener;
     }
@@ -26,18 +26,18 @@ public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteB
         int typeId = msg.readInt();
         byte[] messageBytes = ByteBufUtils.remainingBytes(msg);
         Message message = messageRegistry.parseMessage(messageBytes, typeId);
-        ClientSession session = clientSessionRegistry.get(ctx);
+        ClientConnection session = clientConnectionRegistry.get(ctx);
         this.messageListener.received(session, message);
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        this.clientSessionRegistry.register(ctx, this);
+        this.clientConnectionRegistry.register(ctx, this);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        this.clientSessionRegistry.remove(ctx);
+        this.clientConnectionRegistry.remove(ctx);
     }
 
     @Override

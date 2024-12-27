@@ -12,7 +12,7 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 
 public final class WebsocketServerSetup {
 
-    public  static Channel init(
+    public static Channel init(
         SetupContext context,
         int port
     ) throws InterruptedException {
@@ -27,14 +27,14 @@ public final class WebsocketServerSetup {
                         new HttpObjectAggregator(65536),
                         new HttpResponseEncoder(),
                         new ProtobufWebSocketInboundHandler(
-                            context.clientSessionRegistry,
+                            context.clientConnectionRegistry,
                             context.messageRegistry,
                             context.messageListener
                         )
                     );
                 }
             });
-        return  b.bind(port).sync().channel();
+        return b.bind(port).sync().channel();
     }
 
 }

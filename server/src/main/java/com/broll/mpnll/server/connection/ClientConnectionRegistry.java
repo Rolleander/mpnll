@@ -1,15 +1,18 @@
-package com.broll.mpnll.server.session;
+package com.broll.mpnll.server.connection;
 
 import com.broll.mpnll.server.inbound.ClientInboundHandler;
 
+import java.util.Collection;
+
 import io.netty.channel.ChannelHandlerContext;
 
-public interface ClientSessionRegistry {
+public interface ClientConnectionRegistry {
 
     void register(ChannelHandlerContext context, ClientInboundHandler handler);
 
     void remove(ChannelHandlerContext context);
 
-    ClientSession get(ChannelHandlerContext context);
+    ClientConnection get(ChannelHandlerContext context);
 
+    Collection<ClientConnection> all();
 }

@@ -1,24 +1,24 @@
 package com.broll.mpnll.server.inbound;
 
+import com.broll.mpnll.message.MessageRegistry;
+import com.broll.mpnll.server.connection.ClientConnection;
+import com.broll.mpnll.server.connection.ClientConnectionRegistry;
+import com.google.protobuf.Message;
+
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.buffer.ByteBuf;
 
-import com.broll.mpnll.message.MessageRegistry;
-import com.broll.mpnll.server.session.ClientSession;
-import com.broll.mpnll.server.session.ClientSessionRegistry;
-import com.google.protobuf.Message;
+public class ProtobufWebSocketInboundHandler extends SimpleChannelInboundHandler<WebSocketFrame> implements ClientInboundHandler {
 
-public class ProtobufWebSocketInboundHandler extends SimpleChannelInboundHandler<WebSocketFrame> implements ClientInboundHandler{
-
-    private ClientSessionRegistry clientSessionRegistry;
+    private ClientConnectionRegistry clientConnectionRegistry;
     private MessageRegistry messageRegistry;
     private MessageListener messageListener;
 
-    public ProtobufWebSocketInboundHandler(ClientSessionRegistry clientSessionRegistry, MessageRegistry messageRegistry, MessageListener messageListener) {
-        this.clientSessionRegistry = clientSessionRegistry;
+    public ProtobufWebSocketInboundHandler(ClientConnectionRegistry clientConnectionRegistry, MessageRegistry messageRegistry, MessageListener messageListener) {
+        this.clientConnectionRegistry = clientConnectionRegistry;
         this.messageRegistry = messageRegistry;
         this.messageListener = messageListener;
     }
@@ -29,22 +29,22 @@ public class ProtobufWebSocketInboundHandler extends SimpleChannelInboundHandler
         int typeId = byteBuf.readInt();
         byte[] messageBytes = ByteBufUtils.remainingBytes(byteBuf);
         Message message = messageRegistry.parseMessage(messageBytes, typeId);
-        ClientSession session = clientSessionRegistry.get(ctx);
+        ClientConnection session = clientConnectionRegistry.get(ctx);
         this.messageListener.received(session, message);
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        this.clientSessionRegistry.register(ctx, this);
+        this.clientConnectionRegistry.register(ctx, this);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        this.clientSessionRegistry.remove(ctx);
+        this.clientConnectionRegistry.remove(ctx);
     }
 
     @Override
-    public void send(ChannelHandlerContext context, byte[] data  ) {
+    public void send(ChannelHandlerContext context, byte[] data) {
         ByteBuf byteBuf = context.alloc().buffer();
         byteBuf.readBytes(data);
         context.writeAndFlush(new BinaryWebSocketFrame(byteBuf));

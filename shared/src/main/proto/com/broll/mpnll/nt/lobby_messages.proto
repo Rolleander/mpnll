@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+option java_multiple_files = true;
+option java_package = "com.broll.mpnll.nt";
+
+message NT_LobbyInformation {
+    string lobbyName = 1;
+    int32 lobbyId = 2;
+    int32 playerCount = 3;
+    int32 playerLimit = 4;
+    google.protobuf.Any settings = 5;
+}
+
+message NT_LobbyCreate {
+    string playerName = 1;
+    string authenticationKey = 2;
+    google.protobuf.Any settings = 3;
+    string lobbyName = 4;
+    string version = 5;
+}
+
+message NT_ServerInformation {
+    string serverName = 1;
+    repeated NT_LobbyInformation lobbies = 2;
+}
+
+message NT_ReconnectCheck {
+    string authenticationKey = 1;
+}
+
+message NT_LobbyPlayerInfo {
+    int32 id = 1;
+    string name = 2;
+    google.protobuf.Any settings = 3;
+    bool bot = 4;
+}
+
+message NT_LobbyUpdate {
+    NT_LobbyInformation lobbyInfo = 1;
+    repeated NT_LobbyPlayerInfo players = 2;
+    int32 owner = 3;
+}
+
+message NT_LobbyReconnected {
+    NT_LobbyInformation lobbyInfo = 1;
+    string playerId = 2;
+}
+
+message NT_LobbyJoined {
+    NT_LobbyInformation lobbyInfo = 1;
+    string playerId = 2;
+}
+
+message NT_LobbyJoin {
+    string playerName = 1;
+    int32 lobbyId = 2;
+    string authenticationKey = 3;
+}
+
+message NT_LobbyNoJoin {
+    string reason = 1;
+}
+
+message NT_LobbyLock {
+    bool locked = 1;
+}
+
+message NT_LobbyLeave {
+}
+
+message NT_LobbyKicked {
+    string reason = 1;
+}
+
+message NT_LobbyKick {
+    int32 player = 1;
+}
+
+message NT_LobbyClosed {
+}
+
+message NT_ListLobbies {
+    string authenticationKey = 1;
+    string version = 2;
+}
+
+message NT_ChatMessage {
+    string message = 1;
+    string from = 2;
+}

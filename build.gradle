@@ -36,6 +36,10 @@ configure(subprojects) {
 subprojects {
   version = '$projectVersion'
   ext.appName = 'mpnll'
+
+  dependencies {
+    implementation libs.log4j
+  }
   repositories {
     mavenCentral()
     maven { url 'https://s01.oss.sonatype.org' }
