@@ -15,6 +15,9 @@ public class GwtWebSocket {
     public void open(String url) {
         this.url = url;
         jsWebSocket = createWebSocket(url);
+        if (listener != null) {
+            installListener();
+        }
     }
 
     public void send(byte[] message) {
@@ -31,6 +34,12 @@ public class GwtWebSocket {
 
     public void setListener(Listener listener) {
         this.listener = listener;
+        if (jsWebSocket != null) {
+            installListener();
+        }
+    }
+
+    private void installListener() {
         setOnOpenHandler(jsWebSocket, listener);
         setOnMessageHandler(jsWebSocket, listener);
         setOnCloseHandler(jsWebSocket, listener);
@@ -39,6 +48,7 @@ public class GwtWebSocket {
 
     private native JavaScriptObject createWebSocket(String url) /*-{
             var socket = new $wnd.WebSocket(url);
+            socket.binaryType = "arraybuffer";
             return socket;
         }-*/;
 
@@ -52,37 +62,53 @@ public class GwtWebSocket {
         }-*/;
 
     private native boolean isWebSocketOpen(JavaScriptObject socket) /*-{
-            return socket.readyState === WebSocket.OPEN;
+            return !!socket && socket.readyState === $wnd.WebSocket.OPEN;
         }-*/;
 
     private native void closeWebSocket(JavaScriptObject socket) /*-{
-            socket.close();
+            if (socket) {
+                socket.close();
+            }
         }-*/;
 
     private native void setOnOpenHandler(JavaScriptObject socket, Listener listener) /*-{
-            socket.onopen = function() {
-                listener.@WebSocketClient.WebSocket.Listener::onOpen()();
-            };
+            socket.onopen = $entry(function() {
+                listener.@com.broll.mpnll.gwt.GwtWebSocket.Listener::onOpen()();
+            });
         }-*/;
 
     private native void setOnMessageHandler(JavaScriptObject socket, Listener listener) /*-{
-            socket.onmessage = function(event) {
-                var byteArray = new Uint8Array(event.data);
-                listener.@WebSocketClient.WebSocket.Listener::onMessage([B)(byteArray);
-            };
+            socket.onmessage = $entry(function(event) {
+                var view = new Uint8Array(event.data);
+                var bytes = @com.broll.mpnll.gwt.GwtWebSocket::newByteArray(I)(view.length);
+                for (var i = 0; i < view.length; i++) {
+                    bytes[i] = view[i] > 127 ? view[i] - 256 : view[i];
+                }
+                listener.@com.broll.mpnll.gwt.GwtWebSocket.Listener::onMessage([B)(bytes);
+            });
         }-*/;
 
     private native void setOnCloseHandler(JavaScriptObject socket, Listener listener) /*-{
-            socket.onclose = function() {
-                listener.@WebSocketClient.WebSocket.Listener::onClose()();
-            };
+            socket.onclose = $entry(function() {
+                listener.@com.broll.mpnll.gwt.GwtWebSocket.Listener::onClose()();
+            });
         }-*/;
 
     private native void setOnErrorHandler(JavaScriptObject socket, Listener listener) /*-{
-            socket.onerror = function(event) {
-                listener.@WebSocketClient.WebSocket.Listener::onError(Ljava/lang/Throwable;)(new Error(event.message));
-            };
+            var self = this;
+            socket.onerror = $entry(function(event) {
+                var message = event && event.message ? event.message : "WebSocket error";
+                self.@com.broll.mpnll.gwt.GwtWebSocket::notifyError(Ljava/lang/String;)(message);
+            });
         }-*/;
+
+    private static byte[] newByteArray(int length) {
+        return new byte[length];
+    }
+
+    private void notifyError(String message) {
+        listener.onError(new RuntimeException(message));
+    }
 
     public interface Listener {
         void onOpen();
@@ -94,4 +120,3 @@ public class GwtWebSocket {
         void onError(Throwable error);
     }
 }
-

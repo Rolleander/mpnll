@@ -2,18 +2,7 @@
 .gradle/
 gradle-app.setting
 /gradle/gradle-daemon-jvm.properties
-/build/
-/android/build/
-/core/build/
-/lwjgl2/build/
-/lwjgl3/build/
-/html/build/
-/teavm/build/
-/ios/build/
-/ios-moe/build/
-/headless/build/
-/server/build/
-/shared/build/
+**/build/
 
 ## Java:
 *.class

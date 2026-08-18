@@ -7,6 +7,14 @@ plugins {
 mainClassName = 'com.broll.mpnll.server.ServerLauncher'
 application.setMainClass(mainClassName)
 
+tasks.register('start', JavaExec) {
+  group = 'application'
+  description = 'Starts the MPNLL server using ServerLauncher.'
+  dependsOn classes
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = application.mainClass
+}
+
 dependencies {
   implementation libs.netty.all
   implementation libs.netty.codec
@@ -21,7 +29,6 @@ dependencies {
   implementation libs.commons.collections
   implementation libs.guava
   implementation libs.kryo
-  
+
   implementation project(':shared')
 }
-

@@ -1,5 +1,6 @@
 package com.broll.mpnll.server.lobby;
 
+import com.broll.mpnll.server.connection.ClientConnection;
 import com.broll.mpnll.server.user.User;
 
 import org.slf4j.Logger;
@@ -70,6 +71,37 @@ public class MemberTransactions {
         lobby.usersListeners.forEach(it -> it.userLeft(lobby, user));
         checkAutoClose();
         return true;
+    }
+
+    public boolean transferUser(User user, Lobby target) {
+        if ((lobby.locked && !user.isAllowedToLeaveLockedLobby()) || lobby.closed) {
+            Log.warn("Cannot transfer user from locked or closed lobby");
+            return false;
+        }
+        if (target.locked || target.closed) {
+            Log.warn("Cannot transfer user to locked or closed lobby");
+            return false;
+        }
+        lobby.removeUser(user, false);
+        target.addUser(user);
+        return true;
+    }
+
+    public void reconnected(User user, ClientConnection connection) {
+        Log.info("User {} reconnected to lobby {}", user, this);
+        connection.connectWith(user);
+        userListenerForwarder.reconnected(user);
+        lobby.updatePublisher.memberReconnected(user);
+    }
+
+    public void disconnected(User user) {
+        Log.info("User {} disconnected from lobby {}", user, this);
+        if (lobby.isLocked() && !user.isAllowedToLeaveLockedLobby()) {
+            userListenerForwarder.disconnected(user);
+            lobby.updatePublisher.memberDisconnected(user);
+        } else {
+            removeUser(user);
+        }
     }
 
     private void autoAssignOwner() {

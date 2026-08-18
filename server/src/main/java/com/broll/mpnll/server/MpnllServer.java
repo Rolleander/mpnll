@@ -13,10 +13,20 @@ import com.broll.mpnll.server.lobby.LobbyHandler;
 import com.broll.mpnll.server.site.CloningSitesHandler;
 import com.broll.mpnll.server.site.NetworkSite;
 import com.broll.mpnll.server.site.SitesHandler;
+import com.broll.mpnll.server.user.UserRegistry;
+import com.broll.mpnll.server.user.UserRegistryImpl;
 import com.broll.mpnll.server.utils.SharedData;
 import com.google.protobuf.Message;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -26,10 +36,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 
 public class MpnllServer {
 
+    private final static Logger Log = LoggerFactory.getLogger(MpnllServer.class);
     private final MessageRegistryImpl messageRegistry = new MessageRegistryImpl();
     private final LobbyHandler lobbyHandler = new LobbyHandler(messageRegistry);
     private final SitesHandler sitesHandler = new CloningSitesHandler();
-    private final ClientConnectionRegistry sessionRegistry = new ClientConnectionRegistryImpl(messageRegistry);
+    private final UserRegistry userRegistry = new UserRegistryImpl();
+    private final ClientConnectionRegistry sessionRegistry = new ClientConnectionRegistryImpl(messageRegistry, userRegistry);
     private Channel tcpChannel, wsChannel;
     private EventLoopGroup bossGroup, workerGroup;
     private boolean open = false;
@@ -97,9 +109,33 @@ public class MpnllServer {
         );
         tcpChannel = TcpServerSetup.init(context, tcpPort);
         wsChannel = WebsocketServerSetup.init(context, websocketPort);
-        InetSocketAddress localAddress = (InetSocketAddress) tcpChannel.localAddress();
-        ip = localAddress.getAddress().getHostAddress();
+        ip = findLocalIp();
         open = true;
+        Log.info("Server listening on all interfaces (TCP {}, WebSocket {})",
+            tcpPort, websocketPort);
+        Log.info("Server opened at {}", ip);
+    }
+
+    private String findLocalIp() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                if (!networkInterface.isUp() || networkInterface.isLoopback() || networkInterface.isVirtual()) {
+                    continue;
+                }
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    if (address instanceof Inet4Address && address.isSiteLocalAddress()) {
+                        return address.getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            Log.warn("Could not determine the server's local IP address", e);
+        }
+        return ((InetSocketAddress) tcpChannel.localAddress()).getAddress().getHostAddress();
     }
 
     public void close() {

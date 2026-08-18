@@ -33,9 +33,13 @@ public class ClientConnection {
         ip = remoteAddress.getAddress().getHostAddress();
     }
 
-    void inactive() {
+    void removed() {
         if (user != null) {
             user.disconnect();
+            if (user.inLobby()) {
+                user.getLobby().memberTransactions.disconnected(user);
+            }
+            this.user = null;
         }
     }
 

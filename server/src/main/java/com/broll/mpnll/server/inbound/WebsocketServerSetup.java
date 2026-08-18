@@ -9,6 +9,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 
 public final class WebsocketServerSetup {
 
@@ -26,6 +27,7 @@ public final class WebsocketServerSetup {
                         new HttpRequestDecoder(),
                         new HttpObjectAggregator(65536),
                         new HttpResponseEncoder(),
+                        new WebSocketServerProtocolHandler("/"),
                         new ProtobufWebSocketInboundHandler(
                             context.clientConnectionRegistry,
                             context.messageRegistry,

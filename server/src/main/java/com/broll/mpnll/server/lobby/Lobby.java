@@ -5,7 +5,6 @@ import com.broll.mpnll.message.MessageUtils;
 import com.broll.mpnll.server.user.User;
 import com.broll.mpnll.server.user.UserSettingsBuilder;
 import com.broll.mpnll.server.utils.SharedData;
-import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 
 import org.slf4j.Logger;
@@ -21,6 +20,9 @@ public class Lobby {
 
     public final static int NO_PLAYER_LIMIT = -1;
     private final static Logger Log = LoggerFactory.getLogger(Lobby.class);
+    public LobbyMessageBuilder nt = new LobbyMessageBuilder(this);
+    public MemberTransactions memberTransactions;
+    public UpdatePublisher updatePublisher;
     int id = -1;
     User owner;
     int playerLimit = NO_PLAYER_LIMIT;
@@ -31,16 +33,12 @@ public class Lobby {
     boolean autoClose = true;
     List<LobbyUsersListener> usersListeners = new CopyOnWriteArrayList<>();
     List<LobbyStateListener> stateListeners = new CopyOnWriteArrayList<>();
-
     String name;
     LobbyHandler lobbyHandler;
     LobbySettingsBuilder lobbySettingsBuilder;
     UserSettingsBuilder userSettingsBuilder;
     MessageRegistry messageRegistry;
-    MemberTransactions memberTransactions;
-    UpdatePublisher updatePublisher;
     Object data;
-
     private SharedData sharedData = new SharedData();
 
     Lobby(LobbyHandler lobbyHandler, MessageRegistry messageRegistry) {
@@ -75,20 +73,28 @@ public class Lobby {
         }
     }
 
-    public synchronized void addUser(User user) {
+    public synchronized boolean addUser(User user) {
         if (memberTransactions.addUser(user)) {
             updatePublisher.userJoined(user);
+            return true;
         }
+        return false;
     }
 
-    public synchronized void removeUser(User user, boolean kicked) {
+    public synchronized boolean removeUser(User user, boolean kicked) {
         if (memberTransactions.removeUser(user)) {
             if (kicked) {
                 updatePublisher.userKicked(user);
             } else {
                 updatePublisher.userLeft(user);
             }
+            return true;
         }
+        return false;
+    }
+
+    public synchronized void transferUser(User user, Lobby target) {
+        memberTransactions.transferUser(user, target);
     }
 
     private void updateLock(boolean lock) {
@@ -159,6 +165,10 @@ public class Lobby {
         return this.members.stream().filter(it -> isActiveMember(it) && it.isOnline()).collect(Collectors.toList());
     }
 
+    public User findMember(int id) {
+        return getActiveUsers().stream().filter(it -> it.getId() == id).findFirst().orElse(null);
+    }
+
     public boolean isMember(User user) {
         return members.contains(user);
     }
@@ -167,11 +177,8 @@ public class Lobby {
         return user.getLobby() == this;
     }
 
-    private Any buildSettings() {
-        if (data == null || lobbySettingsBuilder == null) {
-            return Any.getDefaultInstance();
-        }
-        return lobbySettingsBuilder.build(this);
+    public User getOwner() {
+        return owner;
     }
 
     @Override
@@ -184,6 +191,14 @@ public class Lobby {
 
     public boolean isLocked() {
         return locked;
+    }
+
+    public boolean isVisible() {
+        return !locked && !hidden;
+    }
+
+    public int getPlayerCount() {
+        return getActiveUsers().size();
     }
 
     public SharedData getSharedData() {

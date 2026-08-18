@@ -6,6 +6,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -42,17 +43,17 @@ public class LobbyHandler {
         lobbyCreationReceiver = new LobbyCreationReceiver<>(settingsType, callback);
     }
 
-    public boolean requestLobbyCreation(User requester, String lobbyName, Any settings) {
+    public Lobby requestLobbyCreation(User requester, String lobbyName, Any settings) {
         Lobby lobby = new Lobby(this, messageRegistry);
         lobby.id = registry.newId();
         lobby.name = lobbyName;
         if (lobbyCreationReceiver != null) {
             if (lobbyCreationReceiver.allowCreation(requester, lobby, settings)) {
                 openLobby(lobby);
-                return true;
+                return lobby;
             }
         }
-        return false;
+        return null;
     }
 
     public void openLobby(Consumer<Lobby> configure) {
@@ -79,8 +80,16 @@ public class LobbyHandler {
         lobby.members.clear();
     }
 
+    public Lobby getLobby(int id) {
+        return registry.get(id);
+    }
+
     public void closeAll() {
         registry.all().forEach(this::closeLobby);
+    }
+
+    public Collection<Lobby> listAll() {
+        return registry.all();
     }
 
     private class LobbyCreationReceiver<S extends Message> {

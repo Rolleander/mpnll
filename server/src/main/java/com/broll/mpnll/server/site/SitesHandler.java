@@ -3,6 +3,7 @@ package com.broll.mpnll.server.site;
 
 import com.broll.mpnll.server.connection.ClientConnection;
 import com.broll.mpnll.server.impl.ConnectionSite;
+import com.broll.mpnll.server.impl.LobbySite;
 import com.broll.mpnll.server.utils.AnnotationScanner;
 import com.google.common.collect.Lists;
 import com.google.protobuf.Message;
@@ -11,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +27,7 @@ public abstract class SitesHandler {
      */
     protected final static List<Class<? extends NetworkSite>> INTERNAL_SITES = Lists.newArrayList(
         ConnectionSite.class,
-        LobbySite.class,
-        LobbyConnectionSite.class);
+        LobbySite.class);
     private final static Logger Log = LoggerFactory.getLogger(SitesHandler.class);
     private final static IUnknownMessageReceiver DEFAULT_UNKNOWN_MESSAGE_RECEIVER = (message) -> {
         Log.error("No receiverMethod registered for network object " + message);
@@ -52,7 +51,7 @@ public abstract class SitesHandler {
 
     public void clear() {
         siteModificationLock.writeLock().lock();
-        new ArrayList(sites.values()).stream().filter(this::isRemovableSite).forEach(site -> {
+        sites.values().stream().filter(this::isRemovableSite).forEach(site -> {
             sites.remove(site.getClass());
             removeSite((NetworkSite) site);
         });

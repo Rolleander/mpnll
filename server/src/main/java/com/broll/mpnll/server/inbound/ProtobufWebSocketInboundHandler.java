@@ -5,17 +5,24 @@ import com.broll.mpnll.server.connection.ClientConnection;
 import com.broll.mpnll.server.connection.ClientConnectionRegistry;
 import com.google.protobuf.Message;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 
 public class ProtobufWebSocketInboundHandler extends SimpleChannelInboundHandler<WebSocketFrame> implements ClientInboundHandler {
 
+    private static final Logger Log = LoggerFactory.getLogger(ProtobufWebSocketInboundHandler.class);
+
     private ClientConnectionRegistry clientConnectionRegistry;
     private MessageRegistry messageRegistry;
     private MessageListener messageListener;
+    private boolean connected;
 
     public ProtobufWebSocketInboundHandler(ClientConnectionRegistry clientConnectionRegistry, MessageRegistry messageRegistry, MessageListener messageListener) {
         this.clientConnectionRegistry = clientConnectionRegistry;
@@ -34,19 +41,27 @@ public class ProtobufWebSocketInboundHandler extends SimpleChannelInboundHandler
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        this.clientConnectionRegistry.register(ctx, this);
+    public void userEventTriggered(ChannelHandlerContext ctx, Object event) throws Exception {
+        if (event instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+            this.clientConnectionRegistry.register(ctx, this);
+            connected = true;
+            Log.info("WebSocket client connected: {}", ctx.channel().remoteAddress());
+        }
+        ctx.fireUserEventTriggered(event);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        this.clientConnectionRegistry.remove(ctx);
+        if (connected) {
+            Log.info("WebSocket client disconnected: {}", ctx.channel().remoteAddress());
+            this.clientConnectionRegistry.remove(ctx);
+        }
     }
 
     @Override
     public void send(ChannelHandlerContext context, byte[] data) {
         ByteBuf byteBuf = context.alloc().buffer();
-        byteBuf.readBytes(data);
+        byteBuf.writeBytes(data);
         context.writeAndFlush(new BinaryWebSocketFrame(byteBuf));
     }
 }

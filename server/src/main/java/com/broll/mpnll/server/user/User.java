@@ -67,7 +67,7 @@ public class User {
         return listeners;
     }
 
-    String getAuthenticationKey() {
+    public String getAuthenticationKey() {
         return authenticationKey;
     }
 

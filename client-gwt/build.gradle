@@ -4,3 +4,40 @@ dependencies {
   implementation libs.gwt.user
 }
 
+sourceSets {
+  test {
+    java.srcDir 'src/test-gwt/java'
+  }
+}
+
+def gwtSmokeSource = file('src/test-gwt/java')
+def gwtSmokeWar = layout.buildDirectory.dir('gwt-smoke')
+
+tasks.register('gwtCompileSmoke', JavaExec) {
+  group = 'verification'
+  description = 'Compiles the browser WebSocket smoke test with the real GWT compiler.'
+  dependsOn classes
+  mainClass = 'com.google.gwt.dev.Compiler'
+  classpath = files(gwtSmokeSource, sourceSets.main.java.srcDirs) + sourceSets.main.runtimeClasspath
+  args '-war', gwtSmokeWar.get().asFile.absolutePath,
+      '-style', 'PRETTY',
+      '-draftCompile',
+      '-strict',
+      'com.broll.mpnll.gwt.smoke.SmokeTest'
+}
+
+tasks.named('check') {
+  dependsOn gwtCompileSmoke
+}
+
+tasks.register('gwtSmoke', Exec) {
+  group = 'verification'
+  description = 'Compiles and serves the GWT browser smoke test at http://localhost:8888/smoke/.'
+  dependsOn gwtCompileSmoke
+  commandLine 'python3', '-m', 'http.server', '8888',
+      '--directory', gwtSmokeWar.get().asFile.absolutePath
+  doFirst {
+    logger.lifecycle('GWT smoke test: http://localhost:8888/smoke/')
+    logger.lifecycle('Start :server:run in another terminal, then press Connect in the page.')
+  }
+}

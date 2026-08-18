@@ -5,11 +5,17 @@ import com.broll.mpnll.server.connection.ClientConnection;
 import com.broll.mpnll.server.connection.ClientConnectionRegistry;
 import com.google.protobuf.Message;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteBuf> implements ClientInboundHandler {
+public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteBuf>
+    implements ClientInboundHandler {
+
+    private static final Logger Log = LoggerFactory.getLogger(ProtobufTcpInboundHandler.class);
 
     private ClientConnectionRegistry clientConnectionRegistry;
     private MessageRegistry messageRegistry;
@@ -33,10 +39,12 @@ public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteB
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         this.clientConnectionRegistry.register(ctx, this);
+        Log.info("TCP client connected: {}", ctx.channel().remoteAddress());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        Log.info("TCP client disconnected: {}", ctx.channel().remoteAddress());
         this.clientConnectionRegistry.remove(ctx);
     }
 
