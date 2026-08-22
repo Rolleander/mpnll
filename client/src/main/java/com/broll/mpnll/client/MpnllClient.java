@@ -1,6 +1,12 @@
 package com.broll.mpnll.client;
 
+import com.broll.mpnll.NetworkException;
+import com.broll.mpnll.client.persist.ClientAuthentication;
+import com.broll.mpnll.client.persist.IFileAccess;
+import com.broll.mpnll.client.persist.LastConnection;
+import com.broll.mpnll.client.persist.TempFileAccess;
 import com.broll.mpnll.client.site.ClientSite;
+import com.broll.mpnll.client.site.SiteHandler;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageRegistrySetup;
 import com.broll.mpnll.message.MessageUtils;
@@ -14,11 +20,21 @@ import java.util.function.Consumer;
 public class MpnllClient {
 
     private final NativeClient nativeClient;
+    private final SiteHandler siteHandler = new SiteHandler(this);
     private MessageRegistryImpl messageRegistry = new MessageRegistryImpl();
-    private List<ClientSite> sites = new ArrayList<>();
+    private List<ClientStatusListener> statusListeners = new ArrayList<>();
+    private ClientAuthentication clientAuthentication = new ClientAuthentication(new TempFileAccess("MpnllClientAuth.dat"));
+    private LastConnection lastConnection = new LastConnection(new TempFileAccess("MpnllLastNetworkConnection.dat"));
+    private String host;
+    private String version = "0";
 
     public MpnllClient() {
         this.nativeClient = NativeClientRegistry.createClient();
+    }
+
+    public void configureFileAccess(IFileAccess authFileAccess, IFileAccess lastConnectionFileAccess) {
+        this.clientAuthentication = new ClientAuthentication(authFileAccess);
+        this.lastConnection = new LastConnection(lastConnectionFileAccess);
     }
 
     public void registerMessages(Consumer<MessageRegistrySetup> registry) {
@@ -26,6 +42,7 @@ public class MpnllClient {
     }
 
     public synchronized void open(String host) {
+        this.host = host;
         this.nativeClient.open(host, new Listener());
     }
 
@@ -33,21 +50,28 @@ public class MpnllClient {
         this.nativeClient.close();
     }
 
-    public synchronized void addSite(ClientSite site) {
-        this.sites.add(site);
-        site.init(this);
-    }
-
-    public synchronized void clearSites() {
-        this.sites.clear();
-    }
-
-    public synchronized void removeSite(ClientSite site) {
-        this.sites.remove(site);
-    }
-
     public boolean isConnected() {
         return this.nativeClient.isConnected();
+    }
+
+    public void addSite(ClientSite site) {
+        this.siteHandler.addSite(site);
+    }
+
+    public void removeSite(ClientSite site) {
+        this.siteHandler.removeSite(site);
+    }
+
+    public void clearSites() {
+        this.siteHandler.clearSites();
+    }
+
+    public void addStatusListener(ClientStatusListener listener) {
+        this.statusListeners.add(listener);
+    }
+
+    public void removeStatusListener(ClientStatusListener listener) {
+        this.statusListeners.remove(listener);
     }
 
     public void send(Message message) {
@@ -55,25 +79,47 @@ public class MpnllClient {
         nativeClient.send(MessageUtils.toMessageBytes(type, message));
     }
 
+    public ClientAuthentication getClientAuthentication() {
+        return clientAuthentication;
+    }
+
+    public LastConnection getLastConnection() {
+        return lastConnection;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     private class Listener implements ClientConnectionListener {
 
         @Override
         public void onOpen() {
             synchronized (MpnllClient.this) {
-                sites.forEach(ClientSite::onConnect);
+                statusListeners.forEach(ClientStatusListener::connected);
             }
         }
 
         @Override
         public void onClose() {
             synchronized (MpnllClient.this) {
-                sites.forEach(ClientSite::onDisconnect);
+                statusListeners.forEach(ClientStatusListener::disconnected);
             }
         }
 
         @Override
         public void onError(Throwable error) {
-
+            synchronized (MpnllClient.this) {
+                statusListeners.forEach(it -> it.error(error));
+            }
         }
 
         @Override
@@ -83,12 +129,11 @@ public class MpnllClient {
             synchronized (MpnllClient.this) {
                 try {
                     Message message = messageRegistry.parseMessage(content, type);
-                    sites.forEach(it -> it.onReceive(message));
+                    siteHandler.pass(message);
                 } catch (InvalidProtocolBufferException e) {
-                    throw new RuntimeException(e);
+                    throw new NetworkException(e);
                 }
             }
         }
     }
-
 }

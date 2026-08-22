@@ -47,7 +47,7 @@ public class MpnllServer {
     private boolean open = false;
     private SharedData sharedData = new SharedData();
     private String customName;
-    private String version = "1.0";
+    private String version = "0";
     private String ip;
 
     public MpnllServer() {

@@ -7,25 +7,17 @@ public abstract class ClientSite {
 
     private MpnllClient client;
 
-    abstract void registerReceivers(MessageReceiverRegistry registry);
+    protected abstract void registerReceivers(MessageReceiverRegistry registry);
 
     public void init(MpnllClient client) {
         this.client = client;
-    }
-
-    public void onConnect() {
-
-    }
-
-    public void onDisconnect() {
-
     }
 
     public void onReceive(Message message) {
 
     }
 
-    void send(Message message) {
+    protected void send(Message message) {
         client.send(message);
     }
 

@@ -25,7 +25,7 @@ public abstract class SitesHandler {
     /**
      * list of sites that are protected from clearing all sites
      */
-    protected final static List<Class<? extends NetworkSite>> INTERNAL_SITES = Lists.newArrayList(
+    private final static List<Class<? extends NetworkSite>> INTERNAL_SITES = Lists.newArrayList(
         ConnectionSite.class,
         LobbySite.class);
     private final static Logger Log = LoggerFactory.getLogger(SitesHandler.class);
