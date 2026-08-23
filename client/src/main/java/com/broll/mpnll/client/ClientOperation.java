@@ -20,18 +20,14 @@ import java.util.function.Function;
 public abstract class ClientOperation<T> {
 
     private final static int TIMEOUT = 5;
-    private CompletableFuture<T> future = new CompletableFuture<>();
     private MpnllClient client;
 
-    CompletableFuture<T> run(MpnllClient client) {
+    T run(MpnllClient client) {
         this.client = client;
-        this.future = new CompletableFuture<>();
-        operation();
-        waitFor(this.future);
-        return future;
+        return operation();
     }
 
-    protected abstract void operation();
+    protected abstract T operation();
 
     protected void requireConnected() {
         if (!client.isConnected()) {
@@ -78,11 +74,7 @@ public abstract class ClientOperation<T> {
             throw new NetworkException(e);
         }
     }
-
-    protected void complete(T result) {
-        future.complete(result);
-    }
-
+    
     public class AwaitResponseBuilder<R> {
 
         private Message message;

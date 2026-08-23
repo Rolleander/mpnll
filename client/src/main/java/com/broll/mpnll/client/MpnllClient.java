@@ -1,6 +1,10 @@
 package com.broll.mpnll.client;
 
 import com.broll.mpnll.NetworkException;
+import com.broll.mpnll.client.impl.CheckReconnect;
+import com.broll.mpnll.client.impl.ListLobbies;
+import com.broll.mpnll.client.impl.LookupResult;
+import com.broll.mpnll.client.lobby.Lobby;
 import com.broll.mpnll.client.persist.ClientAuthentication;
 import com.broll.mpnll.client.persist.IFileAccess;
 import com.broll.mpnll.client.persist.LastConnection;
@@ -10,17 +14,23 @@ import com.broll.mpnll.client.site.SiteHandler;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageRegistrySetup;
 import com.broll.mpnll.message.MessageUtils;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 
 public class MpnllClient {
 
     private final NativeClient nativeClient;
     private final SiteHandler siteHandler = new SiteHandler(this);
+    private ExecutorService operationRunner;
     private MessageRegistryImpl messageRegistry = new MessageRegistryImpl();
     private List<ClientStatusListener> statusListeners = new ArrayList<>();
     private ClientAuthentication clientAuthentication = new ClientAuthentication(new TempFileAccess("MpnllClientAuth.dat"));
@@ -30,6 +40,8 @@ public class MpnllClient {
 
     public MpnllClient() {
         this.nativeClient = NativeClientRegistry.createClient();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("Client-operations").build();
+        this.operationRunner = Executors.newSingleThreadExecutor(threadFactory);
     }
 
     public void configureFileAccess(IFileAccess authFileAccess, IFileAccess lastConnectionFileAccess) {
@@ -79,6 +91,11 @@ public class MpnllClient {
         nativeClient.send(MessageUtils.toMessageBytes(type, message));
     }
 
+    public void shutdown() {
+        close();
+        operationRunner.shutdown();
+    }
+
     public ClientAuthentication getClientAuthentication() {
         return clientAuthentication;
     }
@@ -97,6 +114,32 @@ public class MpnllClient {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public CompletableFuture<Lobby> reconnectCheck() {
+        String ip = getLastConnection().getLastConnection();
+        if (ip == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return reconnectCheck(ip);
+    }
+
+    public CompletableFuture<Lobby> reconnectCheck(String ip) {
+        return runAsyncOperation(new CheckReconnect(ip));
+    }
+
+    public CompletableFuture<LookupResult> listLobbies() {
+        return listLobbies(null);
+    }
+
+    public CompletableFuture<LookupResult> listLobbies(String ip) {
+        return runAsyncOperation(new ListLobbies(ip));
+    }
+
+    private <T> CompletableFuture<T> runAsyncOperation(ClientOperation<T> operation) {
+        return CompletableFuture.supplyAsync(() ->
+                operation.run(this)
+            , operationRunner);
     }
 
     private class Listener implements ClientConnectionListener {

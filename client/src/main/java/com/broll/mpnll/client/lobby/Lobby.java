@@ -15,6 +15,8 @@ import java.util.Optional;
 
 public class Lobby extends LobbyInfo {
 
+    List<LobbyListener> lobbyListeners = new ArrayList<>();
+    List<ChatListener> chatListeners = new ArrayList<>();
     private int myUserId;
     private Map<Integer, User> users = new HashMap<>();
     private MpnllClient client;
@@ -23,6 +25,22 @@ public class Lobby extends LobbyInfo {
     public Lobby(MpnllClient client, int myUserId) {
         this.client = client;
         this.myUserId = myUserId;
+    }
+
+    public void addLobbyListener(LobbyListener listener) {
+        this.lobbyListeners.add(listener);
+    }
+
+    public void removeLobbyListener(LobbyListener listener) {
+        this.lobbyListeners.remove(listener);
+    }
+
+    public void addChatListener(ChatListener listener) {
+        this.chatListeners.add(listener);
+    }
+
+    public void removeChatListener(ChatListener listener) {
+        this.chatListeners.remove(listener);
     }
 
     private void assureConnected() {

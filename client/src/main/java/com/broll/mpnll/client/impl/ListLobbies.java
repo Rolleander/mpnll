@@ -12,20 +12,20 @@ import com.broll.mpnll.nt.NT_ServerInformation;
 
 import java.util.stream.Collectors;
 
-public class ListLobbiesOperation extends ClientOperation<LookupResult> {
+public class ListLobbies extends ClientOperation<LookupResult> {
 
-    private String ip;
+    private final String ip;
 
-    public ListLobbiesOperation() {
+    public ListLobbies() {
         this(null);
     }
 
-    public ListLobbiesOperation(String ip) {
+    public ListLobbies(String ip) {
         this.ip = ip;
     }
 
     @Override
-    protected void operation() {
+    protected LookupResult operation() {
         if (ip != null) {
             connect(ip);
         }
@@ -33,7 +33,7 @@ public class ListLobbiesOperation extends ClientOperation<LookupResult> {
         NT_ListLobbies message = NT_ListLobbies.newBuilder()
             .setAuthenticationKey(getClientAuthentication().getKey())
             .setVersion(getClientVersion()).build();
-        LookupResult result = this.<LookupResult>send(message)
+        return this.<LookupResult>send(message)
             .on(NT_ServerInformation.newBuilder(), (NT_ServerInformation response) ->
                 new LobbyLookup(
                     response.getServerName(),
@@ -46,7 +46,6 @@ public class ListLobbiesOperation extends ClientOperation<LookupResult> {
                 throw new ResponseException("Could not list lobbies: " + response.getReason());
             })
             .awaitResponse();
-        complete(result);
     }
 
     private LobbyInfo toLobbyInfo(NT_LobbyInformation info) {

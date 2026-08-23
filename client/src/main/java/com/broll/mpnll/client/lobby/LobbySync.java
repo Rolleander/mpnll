@@ -2,6 +2,7 @@ package com.broll.mpnll.client.lobby;
 
 import com.broll.mpnll.client.MpnllClient;
 import com.broll.mpnll.nt.NT_LobbyInformation;
+import com.broll.mpnll.nt.NT_LobbyJoined;
 import com.broll.mpnll.nt.NT_LobbyPlayerInfo;
 import com.broll.mpnll.nt.NT_LobbyReconnected;
 import com.broll.mpnll.nt.NT_LobbyUpdate;
@@ -11,8 +12,16 @@ import java.util.stream.Collectors;
 
 public final class LobbySync {
 
+    public static Lobby joinedLobby(MpnllClient client, NT_LobbyJoined joined) {
+        Lobby lobby = new Lobby(client, joined.getPlayerId());
+        lobby.setServerIp(client.getHost());
+        syncLobby(lobby, joined.getLobbyUpdate());
+        return lobby;
+    }
+
     public static Lobby reconnectedLobby(MpnllClient client, NT_LobbyReconnected reconnected) {
         Lobby lobby = new Lobby(client, reconnected.getPlayerId());
+        lobby.setServerIp(client.getHost());
         syncLobby(lobby, reconnected.getLobbyUpdate());
         return lobby;
     }
@@ -42,12 +51,12 @@ public final class LobbySync {
         User user = new User(info.getId(), lobby);
         syncUser(user, info);
         lobby.getUsersMap().put(info.getId(), user);
-        //todo call user joined listener
+        lobby.lobbyListeners.forEach(it -> it.userJoined(lobby, user));
     }
 
     private static void userLeft(Lobby lobby, User user) {
         lobby.getUsersMap().remove(user.getId());
-        //todo call user left listener
+        lobby.lobbyListeners.forEach(it -> it.userLeft(lobby, user));
     }
 
     private static void syncUser(User user, NT_LobbyPlayerInfo info) {
