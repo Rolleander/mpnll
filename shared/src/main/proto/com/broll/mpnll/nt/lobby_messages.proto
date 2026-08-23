@@ -44,12 +44,12 @@ message NT_LobbyUpdate {
 }
 
 message NT_LobbyReconnected {
-    NT_LobbyInformation lobbyInfo = 1;
+    NT_LobbyUpdate lobbyUpdate = 1;
     int32 playerId = 2;
 }
 
 message NT_LobbyJoined {
-    NT_LobbyInformation lobbyInfo = 1;
+    NT_LobbyUpdate lobbyUpdate = 1;
     int32 playerId = 2;
 }
 

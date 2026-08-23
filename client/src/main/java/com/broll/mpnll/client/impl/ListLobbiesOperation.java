@@ -1,14 +1,18 @@
 package com.broll.mpnll.client.impl;
 
 import com.broll.mpnll.client.ClientOperation;
-import com.broll.mpnll.client.site.ClientSite;
-import com.broll.mpnll.client.site.MessageReceiverRegistry;
+import com.broll.mpnll.client.ResponseException;
+import com.broll.mpnll.client.lobby.LobbyInfo;
+import com.broll.mpnll.client.lobby.LobbySync;
 import com.broll.mpnll.nt.NT_ListLobbies;
+import com.broll.mpnll.nt.NT_LobbyInformation;
 import com.broll.mpnll.nt.NT_LobbyNoJoin;
 import com.broll.mpnll.nt.NT_LobbyReconnected;
 import com.broll.mpnll.nt.NT_ServerInformation;
 
-public class ListLobbiesOperation extends ClientOperation<LobbyLookup> {
+import java.util.stream.Collectors;
+
+public class ListLobbiesOperation extends ClientOperation<LookupResult> {
 
     private String ip;
 
@@ -22,38 +26,32 @@ public class ListLobbiesOperation extends ClientOperation<LobbyLookup> {
 
     @Override
     protected void operation() {
-        if (ip == null) {
-            requireConnected();
-        } else {
+        if (ip != null) {
             connect(ip);
         }
-        register(new ClientSite() {
-            @Override
-            protected void registerReceivers(MessageReceiverRegistry registry) {
-                registry.connect(NT_ServerInformation.newBuilder(), this::receivedInfo);
-                registry.connect(NT_LobbyReconnected.newBuilder(), this::receivedReconnect);
-                registry.connect(NT_LobbyNoJoin.newBuilder(), this::receivedError);
-            }
-
-            private void receivedInfo(NT_ServerInformation info) {
-                String ip = getConnectedIp();
-
-            }
-
-            private void receivedReconnect(NT_LobbyReconnected reconnected) {
-
-            }
-
-            private void receivedError(NT_LobbyNoJoin error) {
-                fail(new Exception("Could not list lobbies: " + error.getReason()));
-            }
-        });
-
-        send(
-            NT_ListLobbies.newBuilder()
-                .setAuthenticationKey(getClientAuthentication().getKey())
-                .setVersion(getClientVersion()).build()
-        );
+        requireConnected();
+        NT_ListLobbies message = NT_ListLobbies.newBuilder()
+            .setAuthenticationKey(getClientAuthentication().getKey())
+            .setVersion(getClientVersion()).build();
+        LookupResult result = this.<LookupResult>send(message)
+            .on(NT_ServerInformation.newBuilder(), (NT_ServerInformation response) ->
+                new LobbyLookup(
+                    response.getServerName(),
+                    getConnectedIp(),
+                    response.getLobbiesList().stream().map(this::toLobbyInfo).collect(Collectors.toList())))
+            .on(NT_LobbyReconnected.newBuilder(), (NT_LobbyReconnected response) ->
+                new ReconnectToLobby(LobbySync.reconnectedLobby(getClient(), response))
+            )
+            .on(NT_LobbyNoJoin.newBuilder(), (NT_LobbyNoJoin response) -> {
+                throw new ResponseException("Could not list lobbies: " + response.getReason());
+            })
+            .awaitResponse();
+        complete(result);
     }
 
+    private LobbyInfo toLobbyInfo(NT_LobbyInformation info) {
+        LobbyInfo lobby = new LobbyInfo();
+        LobbySync.syncInfo(lobby, info, getConnectedIp());
+        return lobby;
+    }
 }
