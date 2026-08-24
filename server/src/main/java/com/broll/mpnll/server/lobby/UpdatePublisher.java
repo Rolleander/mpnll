@@ -63,7 +63,7 @@ public class UpdatePublisher {
     public void memberReconnected(User user) {
         lobby.sendToAll(
             NT_LobbyReconnected.newBuilder()
-                .setLobbyInfo(lobby.nt.lobbyInfo())
+                .setLobbyUpdate(lobby.nt.lobbyUpdate())
                 .setPlayerId(user.getId()).build()
         );
     }

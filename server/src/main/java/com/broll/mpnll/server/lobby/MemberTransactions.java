@@ -22,6 +22,10 @@ public class MemberTransactions {
             Log.warn("Cannot add user to lobby in current state");
             return false;
         }
+        if (user.getLobby() != null) {
+            Log.warn("User is already in another lobby");
+            return false;
+        }
         if (lobby.members.contains(user)) {
             if (lobby.isActiveMember(user)) {
                 Log.warn("User is already active in lobby");

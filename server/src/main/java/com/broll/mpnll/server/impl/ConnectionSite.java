@@ -3,6 +3,7 @@ package com.broll.mpnll.server.impl;
 import com.broll.mpnll.nt.NT_ListLobbies;
 import com.broll.mpnll.nt.NT_LobbyCreate;
 import com.broll.mpnll.nt.NT_LobbyJoin;
+import com.broll.mpnll.nt.NT_LobbyLeave;
 import com.broll.mpnll.nt.NT_LobbyNoJoin;
 import com.broll.mpnll.nt.NT_ReconnectCheck;
 import com.broll.mpnll.nt.NT_ServerInformation;
@@ -63,6 +64,22 @@ public class ConnectionSite extends NetworkSite {
         }
     }
 
+    @ConnectionRestriction(RestrictionType.NOT_IN_LOBBY)
+    @PackageReceiver
+    public void createLobby(NT_LobbyCreate create) {
+        if (!checkJoiningClientVersion(create.getVersion())) {
+            return;
+        }
+        assertUserConnection(create.getPlayerName(), create.getAuthenticationKey());
+        Lobby lobby = getLobbyHandler().requestLobbyCreation(getUser(), create.getLobbyName(), create.getSettings());
+        if (lobby != null) {
+            joinLobby(lobby);
+        } else {
+            Log.warn("User " + getUser() + " was not allowed to create lobby!");
+            sendNoJoinResponse();
+        }
+    }
+
     @ConnectionRestriction(RestrictionType.IN_LOBBY)
     @PackageReceiver
     public void switchLobby(NT_LobbyJoin join) {
@@ -78,26 +95,17 @@ public class ConnectionSite extends NetworkSite {
             from.updatePublisher.userJoined(getUser());
             return;
         }
-        if (initUserAndJoinLobby(join.getLobbyId(), join.getPlayerName(), join.getAuthenticationKey())) {
-            //remove from previous lobby
-            from.removeUser(getUser(), false);
+        from.removeUser(getUser(), false);
+        Lobby to = getLobbyHandler().getLobby(join.getLobbyId());
+        if (to != null) {
+            to.addUser(getUser());
         }
     }
 
-    @ConnectionRestriction(RestrictionType.NOT_IN_LOBBY)
+    @ConnectionRestriction(RestrictionType.IN_LOBBY)
     @PackageReceiver
-    public void createLobby(NT_LobbyCreate create) {
-        if (!checkJoiningClientVersion(create.getVersion())) {
-            return;
-        }
-        assertUserConnection(create.getPlayerName(), create.getAuthenticationKey());
-        Lobby lobby = getLobbyHandler().requestLobbyCreation(getUser(), create.getLobbyName(), create.getSettings());
-        if (lobby != null) {
-            joinLobby(lobby);
-        } else {
-            Log.warn("User " + getUser() + " was not allowed to create lobby!");
-            sendNoJoinResponse();
-        }
+    public void leaveLobby(NT_LobbyLeave leave) {
+        getLobby().removeUser(getUser(), false);
     }
 
     private boolean joinLobby(Lobby lobby) {

@@ -2,9 +2,13 @@ package com.broll.mpnll.client;
 
 import com.broll.mpnll.NetworkException;
 import com.broll.mpnll.client.impl.CheckReconnect;
+import com.broll.mpnll.client.impl.CreateLobby;
+import com.broll.mpnll.client.impl.JoinLobby;
 import com.broll.mpnll.client.impl.ListLobbies;
-import com.broll.mpnll.client.impl.LookupResult;
+import com.broll.mpnll.client.impl.LobbyLookup;
+import com.broll.mpnll.client.impl.ReconnectToLobby;
 import com.broll.mpnll.client.lobby.Lobby;
+import com.broll.mpnll.client.lobby.LobbyInfo;
 import com.broll.mpnll.client.persist.ClientAuthentication;
 import com.broll.mpnll.client.persist.IFileAccess;
 import com.broll.mpnll.client.persist.LastConnection;
@@ -19,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +42,7 @@ public class MpnllClient {
     private LastConnection lastConnection = new LastConnection(new TempFileAccess("MpnllLastNetworkConnection.dat"));
     private String host;
     private String version = "0";
+    private Lobby connectedLobby;
 
     public MpnllClient() {
         this.nativeClient = NativeClientRegistry.createClient();
@@ -125,21 +131,56 @@ public class MpnllClient {
     }
 
     public CompletableFuture<Lobby> reconnectCheck(String ip) {
-        return runAsyncOperation(new CheckReconnect(ip));
+        return runAsyncOperation(new CheckReconnect(ip), this::activateLobby);
     }
 
-    public CompletableFuture<LookupResult> listLobbies() {
+    public CompletableFuture<LobbyLookup> listLobbies() {
         return listLobbies(null);
     }
 
-    public CompletableFuture<LookupResult> listLobbies(String ip) {
-        return runAsyncOperation(new ListLobbies(ip));
+    public CompletableFuture<LobbyLookup> listLobbies(String ip) {
+        return runAsyncOperation(new ListLobbies(ip), null)
+            .thenApply(result -> {
+                if (result instanceof ReconnectToLobby) {
+                    activateLobby(((ReconnectToLobby) result).getLobby());
+                    return new LobbyLookup("", "", Collections.emptyList());
+                }
+                return (LobbyLookup) result;
+            });
     }
 
-    private <T> CompletableFuture<T> runAsyncOperation(ClientOperation<T> operation) {
+    public CompletableFuture<Lobby> joinLobby(LobbyInfo lobby, String userName) {
+        return runAsyncOperation(new JoinLobby(lobby, userName), this::activateLobby);
+    }
+
+    public CompletableFuture<Lobby> createLobby(String userName, Object lobbySettings) {
+        return runAsyncOperation(new CreateLobby(userName, lobbySettings), this::activateLobby);
+    }
+
+    private <T> CompletableFuture<T> runAsyncOperation(ClientOperation<T> operation, Consumer<T> onSuccess) {
         return CompletableFuture.supplyAsync(() ->
                 operation.run(this)
-            , operationRunner);
+            , operationRunner).thenApply(it -> {
+            if (onSuccess != null) {
+                onSuccess.accept(it);
+            }
+            return it;
+        });
+    }
+
+    public Lobby getConnectedLobby() {
+        return connectedLobby;
+    }
+
+    private void activateLobby(Lobby lobby) {
+        this.connectedLobby = lobby;
+        statusListeners.forEach(it -> it.joinedLobby(lobby));
+    }
+
+    private void deactivateLobby() {
+        Lobby left = this.connectedLobby;
+        this.connectedLobby = null;
+        statusListeners.forEach(it -> it.leftLobby(left));
     }
 
     private class Listener implements ClientConnectionListener {
