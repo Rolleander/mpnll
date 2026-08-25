@@ -6,6 +6,6 @@ import java.util.function.Consumer;
 
 public interface MessageReceiverRegistry {
 
-    <T extends Message> void connect(Message.Builder builder, Consumer<T> receiver);
+    <T extends Message> void connect(Class<?> messageType, Consumer<T> receiver);
 
 }

@@ -2,7 +2,10 @@ package com.broll.mpnll.server.lobby;
 
 import com.broll.mpnll.nt.NT_LobbyInformation;
 import com.broll.mpnll.nt.NT_LobbyUpdate;
+import com.broll.mpnll.server.user.User;
 import com.google.protobuf.Any;
+
+import java.util.stream.Collectors;
 
 public class LobbyMessageBuilder {
 
@@ -23,7 +26,10 @@ public class LobbyMessageBuilder {
     }
 
     public NT_LobbyUpdate lobbyUpdate() {
-        return null;
+        NT_LobbyUpdate.Builder update = NT_LobbyUpdate.newBuilder();
+        update.setLobbyInfo(lobbyInfo());
+        update.addAllPlayers(lobby.getAllUsers().stream().map(User::nt).collect(Collectors.toList()));
+        return update.build();
     }
 
     private Any buildSettings() {

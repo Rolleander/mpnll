@@ -1,7 +1,5 @@
 package com.broll.mpnll.client.persist;
 
-import java.util.UUID;
-
 public class ClientAuthentication {
 
     private IFileAccess fileAccess;
@@ -30,7 +28,15 @@ public class ClientAuthentication {
     }
 
     private String generateAccountKey() {
-        return UUID.randomUUID().toString();
+        StringBuilder key = new StringBuilder();
+        for (int i = 0; i < 32; i++) {
+            if (i == 8 || i == 12 || i == 16 || i == 20) {
+                key.append('-');
+            }
+            int value = (int) (Math.random() * 16);
+            key.append(Integer.toHexString(value));
+        }
+        return key.toString();
     }
 
 }

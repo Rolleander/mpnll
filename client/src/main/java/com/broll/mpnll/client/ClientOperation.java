@@ -1,20 +1,16 @@
 package com.broll.mpnll.client;
 
 import com.broll.mpnll.NetworkException;
+import com.broll.mpnll.client.async.ClientFuture;
+import com.broll.mpnll.client.async.ClientPromise;
+import com.broll.mpnll.client.async.ScheduledTask;
 import com.broll.mpnll.client.persist.ClientAuthentication;
 import com.broll.mpnll.client.site.ClientSite;
 import com.broll.mpnll.client.site.MessageReceiverRegistry;
 import com.google.protobuf.Message;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 public abstract class ClientOperation<T> {
@@ -22,12 +18,16 @@ public abstract class ClientOperation<T> {
     private final static int TIMEOUT = 5;
     private MpnllClient client;
 
-    T run(MpnllClient client) {
+    ClientFuture<T> run(MpnllClient client) {
         this.client = client;
-        return operation();
+        try {
+            return operation();
+        } catch (Throwable error) {
+            return ClientPromise.failed(error);
+        }
     }
 
-    protected abstract T operation();
+    protected abstract ClientFuture<T> operation();
 
     protected void requireConnected() {
         if (!client.isConnected()) {
@@ -35,15 +35,15 @@ public abstract class ClientOperation<T> {
         }
     }
 
-    protected void connect(String ip) {
+    protected ClientFuture<Void> connect(String ip) {
         if (client.isConnected()) {
-            if (!StringUtils.equals(client.getHost(), ip)) {
+            if (!java.util.Objects.equals(client.getHost(), ip)) {
                 client.close();
-                client.open(ip);
+                return client.openAsync(ip);
             }
-        } else {
-            client.open(ip);
+            return ClientPromise.completed(null);
         }
+        return client.openAsync(ip);
     }
 
     protected ClientAuthentication getClientAuthentication() {
@@ -67,47 +67,52 @@ public abstract class ClientOperation<T> {
         return client;
     }
 
-    private <F> F waitFor(Future<F> future) {
-        try {
-            return future.get(TIMEOUT, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new NetworkException(e);
-        }
-    }
-    
     public class AwaitResponseBuilder<R> {
 
         private Message message;
-        private Map<Message.Builder, Function<Message, R>> calls = new HashMap<>();
-        private CompletableFuture<R> future = new CompletableFuture<>();
+        private Map<Class<?>, Function<Message, R>> calls = new HashMap<>();
 
         AwaitResponseBuilder(Message message) {
             this.message = message;
         }
 
-        public AwaitResponseBuilder<R> on(Message.Builder messageType, Function<? extends Message, R> call) {
-            calls.put(messageType, (Function<Message, R>) call);
+        public <M extends Message> AwaitResponseBuilder<R> on(Message.Builder messageType, Function<M, R> call) {
+            calls.put(messageType.getDefaultInstanceForType().getClass(), (Function<Message, R>) call);
             return this;
         }
 
-        public R awaitResponse() {
+        public ClientFuture<R> execute() {
+            ClientPromise<R> result = new ClientPromise<>();
             ClientSite site = new ClientSite() {
                 @Override
                 protected void registerReceivers(MessageReceiverRegistry registry) {
-                    calls.forEach((messageBuilder, call) ->
-                        registry.connect(messageBuilder, (message) -> {
-                            future.complete(call.apply(message));
-                        })
-                    );
+                    calls.forEach((messageType, call) -> registry.connect(messageType, message -> {
+                        try {
+                            result.complete(call.apply(message));
+                        } catch (Throwable error) {
+                            result.fail(error);
+                        }
+                    }));
                 }
             };
             client.addSite(site);
-            client.send(message);
-            try {
-                return waitFor(future);
-            } finally {
+            ScheduledTask timeout = client.schedule(TIMEOUT * 1000, () ->
+                result.fail(new NetworkException("Operation timed out after " + TIMEOUT + " seconds"))
+            );
+            result.onSuccess(value -> {
+                timeout.cancel();
                 client.removeSite(site);
+            });
+            result.onFailure(error -> {
+                timeout.cancel();
+                client.removeSite(site);
+            });
+            try {
+                client.send(message);
+            } catch (Throwable error) {
+                result.fail(error);
             }
+            return result;
         }
     }
 

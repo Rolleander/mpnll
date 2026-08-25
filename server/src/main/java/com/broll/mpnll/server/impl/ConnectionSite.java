@@ -108,6 +108,11 @@ public class ConnectionSite extends NetworkSite {
         getLobby().removeUser(getUser(), false);
     }
 
+    @Override
+    protected boolean isInternal() {
+        return true;
+    }
+
     private boolean joinLobby(Lobby lobby) {
         boolean success = lobby.addUser(getUser());
         if (!success) {

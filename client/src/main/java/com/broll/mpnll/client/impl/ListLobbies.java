@@ -2,6 +2,8 @@ package com.broll.mpnll.client.impl;
 
 import com.broll.mpnll.client.ClientOperation;
 import com.broll.mpnll.client.ResponseException;
+import com.broll.mpnll.client.async.ClientFuture;
+import com.broll.mpnll.client.async.ClientPromise;
 import com.broll.mpnll.client.lobby.LobbyInfo;
 import com.broll.mpnll.client.lobby.LobbySync;
 import com.broll.mpnll.nt.NT_ListLobbies;
@@ -25,27 +27,29 @@ public class ListLobbies extends ClientOperation<LookupResult> {
     }
 
     @Override
-    protected LookupResult operation() {
-        if (ip != null) {
-            connect(ip);
-        }
-        requireConnected();
-        NT_ListLobbies message = NT_ListLobbies.newBuilder()
-            .setAuthenticationKey(getClientAuthentication().getKey())
-            .setVersion(getClientVersion()).build();
-        return this.<LookupResult>send(message)
-            .on(NT_ServerInformation.newBuilder(), (NT_ServerInformation response) ->
-                new LobbyLookup(
-                    response.getServerName(),
-                    getConnectedIp(),
-                    response.getLobbiesList().stream().map(this::toLobbyInfo).collect(Collectors.toList())))
-            .on(NT_LobbyReconnected.newBuilder(), (NT_LobbyReconnected response) ->
-                new ReconnectToLobby(LobbySync.reconnectedLobby(getClient(), response))
-            )
-            .on(NT_LobbyNoJoin.newBuilder(), (NT_LobbyNoJoin response) -> {
-                throw new ResponseException("Could not list lobbies: " + response.getReason());
-            })
-            .awaitResponse();
+    protected ClientFuture<LookupResult> operation() {
+        ClientFuture<Void> connection = ip == null
+            ? ClientPromise.completed(null)
+            : connect(ip);
+        return connection.thenCompose(ignored -> {
+            requireConnected();
+            NT_ListLobbies message = NT_ListLobbies.newBuilder()
+                .setAuthenticationKey(getClientAuthentication().getKey())
+                .setVersion(getClientVersion()).build();
+            return this.<LookupResult>send(message)
+                .on(NT_ServerInformation.newBuilder(), (NT_ServerInformation response) ->
+                    new LobbyLookup(
+                        response.getServerName(),
+                        getConnectedIp(),
+                        response.getLobbiesList().stream().map(this::toLobbyInfo).collect(Collectors.toList())))
+                .on(NT_LobbyReconnected.newBuilder(), (NT_LobbyReconnected response) ->
+                    new ReconnectToLobby(LobbySync.reconnectedLobby(getClient(), response))
+                )
+                .on(NT_LobbyNoJoin.newBuilder(), (NT_LobbyNoJoin response) -> {
+                    throw new ResponseException("Could not list lobbies: " + response.getReason());
+                })
+                .execute();
+        });
     }
 
     private LobbyInfo toLobbyInfo(NT_LobbyInformation info) {

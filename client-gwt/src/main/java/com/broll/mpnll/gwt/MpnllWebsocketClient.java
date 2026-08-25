@@ -3,6 +3,8 @@ package com.broll.mpnll.gwt;
 import com.broll.mpnll.client.ClientConnectionListener;
 import com.broll.mpnll.client.NativeClient;
 import com.broll.mpnll.client.NativeClientRegistry;
+import com.broll.mpnll.client.async.ScheduledTask;
+import com.google.gwt.user.client.Timer;
 
 public class MpnllWebsocketClient implements NativeClient {
 
@@ -14,7 +16,6 @@ public class MpnllWebsocketClient implements NativeClient {
 
     @Override
     public void open(String host, ClientConnectionListener listener) {
-        socket.open(host);
         socket.setListener(new GwtWebSocket.Listener() {
             @Override
             public void onOpen() {
@@ -36,6 +37,7 @@ public class MpnllWebsocketClient implements NativeClient {
                 listener.onError(error);
             }
         });
+        socket.open(host);
     }
 
     @Override
@@ -51,5 +53,22 @@ public class MpnllWebsocketClient implements NativeClient {
     @Override
     public boolean isConnected() {
         return socket.isOpen();
+    }
+
+    @Override
+    public ScheduledTask schedule(int delayMillis, Runnable action) {
+        Timer timer = new Timer() {
+            @Override
+            public void run() {
+                action.run();
+            }
+        };
+        timer.schedule(delayMillis);
+        return timer::cancel;
+    }
+
+    @Override
+    public void shutdown() {
+        // GWT timers are individually cancelled by completed operations.
     }
 }

@@ -7,14 +7,17 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * JVM file implementation. Browser clients should use a GWT-specific IFileAccess.
+ */
 public class TempFileAccess implements IFileAccess {
 
-    private final static Logger Log = LoggerFactory.getLogger(TempFileAccess.class);
-    private File file;
+    private static final Logger Log = LoggerFactory.getLogger(TempFileAccess.class);
+    private final File file;
 
     public TempFileAccess(String fileName) {
         String tmpdir = System.getProperty("java.io.tmpdir");
-        file = new File(tmpdir + fileName);
+        file = new File(tmpdir, fileName);
     }
 
     @Override
@@ -43,6 +46,8 @@ public class TempFileAccess implements IFileAccess {
 
     @Override
     public void delete() {
-        file.delete();
+        if (!file.delete() && file.exists()) {
+            Log.warn("Failed to delete {}", file);
+        }
     }
 }

@@ -1,8 +1,6 @@
 package com.broll.mpnll.client.site;
 
 import com.broll.mpnll.client.MpnllClient;
-import com.broll.mpnll.client.impl.LobbySite;
-import com.google.common.collect.Lists;
 import com.google.protobuf.Message;
 
 import java.util.ArrayList;
@@ -10,10 +8,6 @@ import java.util.List;
 
 public class SiteHandler {
 
-    /**
-     * list of sites that are protected from clearing all sites
-     */
-    private final static List<Class<? extends ClientSite>> INTERNAL_SITES = Lists.newArrayList(LobbySite.class);
     private final MpnllClient client;
     private final List<ClientSite> sites = new ArrayList<>();
 
@@ -27,7 +21,7 @@ public class SiteHandler {
     }
 
     public synchronized void clearSites() {
-        this.sites.removeIf(it -> INTERNAL_SITES.stream().noneMatch(site -> site.isInstance(it)));
+        this.sites.removeIf(site -> !site.isInternal());
     }
 
     public synchronized void removeSite(ClientSite site) {
@@ -35,7 +29,7 @@ public class SiteHandler {
     }
 
     public void pass(Message message) {
-        sites.forEach(it -> it.onReceive(message));
+        new ArrayList<>(sites).forEach(site -> site.onReceive(message));
     }
 
 }

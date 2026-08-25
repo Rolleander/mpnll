@@ -4,6 +4,13 @@ dependencies {
   implementation libs.gwt.user
 }
 
+tasks.named('jar') {
+  from sourceSets.main.allJava
+  from('src/main/java') {
+    include '**/*.gwt.xml'
+  }
+}
+
 sourceSets {
   test {
     java.srcDir 'src/test-gwt/java'
@@ -12,13 +19,14 @@ sourceSets {
 
 def gwtSmokeSource = file('src/test-gwt/java')
 def gwtSmokeWar = layout.buildDirectory.dir('gwt-smoke')
+def clientSource = project(':client').file('src/main/java')
 
 tasks.register('gwtCompileSmoke', JavaExec) {
   group = 'verification'
   description = 'Compiles the browser WebSocket smoke test with the real GWT compiler.'
   dependsOn classes
   mainClass = 'com.google.gwt.dev.Compiler'
-  classpath = files(gwtSmokeSource, sourceSets.main.java.srcDirs) + sourceSets.main.runtimeClasspath
+  classpath = files(gwtSmokeSource, sourceSets.main.java.srcDirs, clientSource) + sourceSets.main.runtimeClasspath
   args '-war', gwtSmokeWar.get().asFile.absolutePath,
       '-style', 'PRETTY',
       '-draftCompile',

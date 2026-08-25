@@ -1,7 +1,11 @@
 dependencies {
   api project(':shared')
-  implementation libs.commons.collections
-  implementation libs.commons.io
-  implementation libs.commons.lang
-  implementation libs.guava
+  testImplementation 'junit:junit:4.13.2'
+}
+
+tasks.named('jar') {
+  from sourceSets.main.allJava
+  from('src/main/java') {
+    include '**/*.gwt.xml'
+  }
 }

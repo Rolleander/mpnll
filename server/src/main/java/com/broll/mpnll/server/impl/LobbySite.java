@@ -38,4 +38,9 @@ public class LobbySite extends NetworkSite {
     private void receive(NT_LobbyLeave nt) {
         getLobby().removeUser(getUser(), false);
     }
+
+    @Override
+    protected boolean isInternal() {
+        return true;
+    }
 }

@@ -67,7 +67,6 @@ public class LobbyHandler {
         registry.register(lobby);
         lobby.stateListeners.forEach(it -> it.lobbyOpened(lobby));
         stateListeners.forEach(it -> it.lobbyOpened(lobby));
-        lobby.updatePublisher.opened();
     }
 
     public void closeLobby(Lobby lobby) {

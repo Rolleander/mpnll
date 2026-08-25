@@ -86,4 +86,8 @@ public abstract class NetworkSite {
         return null;
     }
 
+    protected boolean isInternal() {
+        return false;
+    }
+
 }

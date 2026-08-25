@@ -6,6 +6,14 @@ dependencies {
   api libs.protobuf.java
 }
 
+tasks.named('jar') {
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  from sourceSets.main.allJava
+  from('src/main/java') {
+    include '**/*.gwt.xml'
+  }
+}
+
 sourceSets {
   main {
     java {

@@ -2,6 +2,7 @@ package com.broll.mpnll.client.impl;
 
 import com.broll.mpnll.client.ClientOperation;
 import com.broll.mpnll.client.ResponseException;
+import com.broll.mpnll.client.async.ClientFuture;
 import com.broll.mpnll.client.lobby.Lobby;
 import com.broll.mpnll.client.lobby.LobbySync;
 import com.broll.mpnll.nt.NT_LobbyCreate;
@@ -19,7 +20,7 @@ public class CreateLobby extends ClientOperation<Lobby> {
     }
 
     @Override
-    protected Lobby operation() {
+    protected ClientFuture<Lobby> operation() {
         requireConnected();
         NT_LobbyCreate message = NT_LobbyCreate.newBuilder()
             .setAuthenticationKey(getClientAuthentication().getKey())
@@ -34,7 +35,7 @@ public class CreateLobby extends ClientOperation<Lobby> {
             .on(NT_LobbyNoJoin.newBuilder(), (NT_LobbyNoJoin response) -> {
                 throw new ResponseException("Could not create lobby: " + response.getReason());
             })
-            .awaitResponse();
+            .execute();
     }
 
 }

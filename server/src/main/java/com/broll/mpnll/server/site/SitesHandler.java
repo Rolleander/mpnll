@@ -2,10 +2,7 @@ package com.broll.mpnll.server.site;
 
 
 import com.broll.mpnll.server.connection.ClientConnection;
-import com.broll.mpnll.server.impl.ConnectionSite;
-import com.broll.mpnll.server.impl.LobbySite;
 import com.broll.mpnll.server.utils.AnnotationScanner;
-import com.google.common.collect.Lists;
 import com.google.protobuf.Message;
 
 import org.slf4j.Logger;
@@ -14,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -22,12 +18,6 @@ import java.util.stream.Collectors;
 
 public abstract class SitesHandler {
 
-    /**
-     * list of sites that are protected from clearing all sites
-     */
-    private final static List<Class<? extends NetworkSite>> INTERNAL_SITES = Lists.newArrayList(
-        ConnectionSite.class,
-        LobbySite.class);
     private final static Logger Log = LoggerFactory.getLogger(SitesHandler.class);
     private final static IUnknownMessageReceiver DEFAULT_UNKNOWN_MESSAGE_RECEIVER = (message) -> {
         Log.error("No receiverMethod registered for network object " + message);
@@ -59,7 +49,7 @@ public abstract class SitesHandler {
     }
 
     private boolean isRemovableSite(NetworkSite site) {
-        return INTERNAL_SITES.stream().noneMatch(it -> it.isInstance(site));
+        return !site.isInternal();
     }
 
     public final void add(NetworkSite site) {

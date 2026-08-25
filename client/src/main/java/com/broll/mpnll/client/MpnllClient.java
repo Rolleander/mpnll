@@ -1,6 +1,9 @@
 package com.broll.mpnll.client;
 
 import com.broll.mpnll.NetworkException;
+import com.broll.mpnll.client.async.ClientFuture;
+import com.broll.mpnll.client.async.ClientPromise;
+import com.broll.mpnll.client.async.ScheduledTask;
 import com.broll.mpnll.client.impl.CheckReconnect;
 import com.broll.mpnll.client.impl.CreateLobby;
 import com.broll.mpnll.client.impl.JoinLobby;
@@ -12,44 +15,45 @@ import com.broll.mpnll.client.lobby.LobbyInfo;
 import com.broll.mpnll.client.persist.ClientAuthentication;
 import com.broll.mpnll.client.persist.IFileAccess;
 import com.broll.mpnll.client.persist.LastConnection;
-import com.broll.mpnll.client.persist.TempFileAccess;
+import com.broll.mpnll.client.persist.MemoryFileAccess;
 import com.broll.mpnll.client.site.ClientSite;
 import com.broll.mpnll.client.site.SiteHandler;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageRegistrySetup;
 import com.broll.mpnll.message.MessageUtils;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 
 public class MpnllClient {
 
+    private static final int CONNECTION_TIMEOUT_MILLIS = 5000;
+
     private final NativeClient nativeClient;
     private final SiteHandler siteHandler = new SiteHandler(this);
-    private ExecutorService operationRunner;
     private MessageRegistryImpl messageRegistry = new MessageRegistryImpl();
     private List<ClientStatusListener> statusListeners = new ArrayList<>();
-    private ClientAuthentication clientAuthentication = new ClientAuthentication(new TempFileAccess("MpnllClientAuth.dat"));
-    private LastConnection lastConnection = new LastConnection(new TempFileAccess("MpnllLastNetworkConnection.dat"));
+    private ClientAuthentication clientAuthentication = new ClientAuthentication(new MemoryFileAccess());
+    private LastConnection lastConnection = new LastConnection(new MemoryFileAccess());
     private String host;
     private String version = "0";
     private Lobby connectedLobby;
 
     public MpnllClient() {
-        this.nativeClient = NativeClientRegistry.createClient();
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("Client-operations").build();
-        this.operationRunner = Executors.newSingleThreadExecutor(threadFactory);
+        this(NativeClientRegistry.createClient());
     }
 
+    public MpnllClient(NativeClient nativeClient) {
+        if (nativeClient == null) {
+            throw new IllegalArgumentException("nativeClient must not be null");
+        }
+        this.nativeClient = nativeClient;
+    }
+    
     public void configureFileAccess(IFileAccess authFileAccess, IFileAccess lastConnectionFileAccess) {
         this.clientAuthentication = new ClientAuthentication(authFileAccess);
         this.lastConnection = new LastConnection(lastConnectionFileAccess);
@@ -60,8 +64,30 @@ public class MpnllClient {
     }
 
     public synchronized void open(String host) {
+        openAsync(host);
+    }
+
+    public ClientFuture<Void> openAsync(String host) {
+        if (nativeClient.isConnected() && java.util.Objects.equals(this.host, host)) {
+            return ClientPromise.completed(null);
+        }
+        if (nativeClient.isConnected()) {
+            nativeClient.close();
+        }
         this.host = host;
-        this.nativeClient.open(host, new Listener());
+        ClientPromise<Void> connection = new ClientPromise<>();
+        ScheduledTask timeout = nativeClient.schedule(CONNECTION_TIMEOUT_MILLIS, () -> {
+            connection.fail(new NetworkException("Connection timed out after 5 seconds"));
+            nativeClient.close();
+        });
+        connection.onSuccess(ignored -> timeout.cancel());
+        connection.onFailure(error -> timeout.cancel());
+        try {
+            this.nativeClient.open(host, new Listener(connection));
+        } catch (Throwable error) {
+            connection.fail(error);
+        }
+        return connection;
     }
 
     public synchronized void close() {
@@ -99,7 +125,7 @@ public class MpnllClient {
 
     public void shutdown() {
         close();
-        operationRunner.shutdown();
+        nativeClient.shutdown();
     }
 
     public ClientAuthentication getClientAuthentication() {
@@ -122,23 +148,23 @@ public class MpnllClient {
         this.version = version;
     }
 
-    public CompletableFuture<Lobby> reconnectCheck() {
+    public ClientFuture<Lobby> reconnectCheck() {
         String ip = getLastConnection().getLastConnection();
         if (ip == null) {
-            return CompletableFuture.completedFuture(null);
+            return ClientPromise.completed(null);
         }
         return reconnectCheck(ip);
     }
 
-    public CompletableFuture<Lobby> reconnectCheck(String ip) {
+    public ClientFuture<Lobby> reconnectCheck(String ip) {
         return runAsyncOperation(new CheckReconnect(ip), this::activateLobby);
     }
 
-    public CompletableFuture<LobbyLookup> listLobbies() {
+    public ClientFuture<LobbyLookup> listLobbies() {
         return listLobbies(null);
     }
 
-    public CompletableFuture<LobbyLookup> listLobbies(String ip) {
+    public ClientFuture<LobbyLookup> listLobbies(String ip) {
         return runAsyncOperation(new ListLobbies(ip), null)
             .thenApply(result -> {
                 if (result instanceof ReconnectToLobby) {
@@ -149,23 +175,24 @@ public class MpnllClient {
             });
     }
 
-    public CompletableFuture<Lobby> joinLobby(LobbyInfo lobby, String userName) {
+    public ClientFuture<Lobby> joinLobby(LobbyInfo lobby, String userName) {
         return runAsyncOperation(new JoinLobby(lobby, userName), this::activateLobby);
     }
 
-    public CompletableFuture<Lobby> createLobby(String userName, Object lobbySettings) {
+    public ClientFuture<Lobby> createLobby(String userName, Object lobbySettings) {
         return runAsyncOperation(new CreateLobby(userName, lobbySettings), this::activateLobby);
     }
 
-    private <T> CompletableFuture<T> runAsyncOperation(ClientOperation<T> operation, Consumer<T> onSuccess) {
-        return CompletableFuture.supplyAsync(() ->
-                operation.run(this)
-            , operationRunner).thenApply(it -> {
-            if (onSuccess != null) {
-                onSuccess.accept(it);
-            }
-            return it;
-        });
+    private <T> ClientFuture<T> runAsyncOperation(ClientOperation<T> operation, Consumer<T> onSuccess) {
+        ClientFuture<T> result = operation.run(this);
+        if (onSuccess != null) {
+            result.onSuccess(onSuccess);
+        }
+        return result;
+    }
+
+    ScheduledTask schedule(int delayMillis, Runnable action) {
+        return nativeClient.schedule(delayMillis, action);
     }
 
     public Lobby getConnectedLobby() {
@@ -185,8 +212,15 @@ public class MpnllClient {
 
     private class Listener implements ClientConnectionListener {
 
+        private final ClientPromise<Void> connection;
+
+        private Listener(ClientPromise<Void> connection) {
+            this.connection = connection;
+        }
+
         @Override
         public void onOpen() {
+            connection.complete(null);
             synchronized (MpnllClient.this) {
                 statusListeners.forEach(ClientStatusListener::connected);
             }
@@ -194,6 +228,9 @@ public class MpnllClient {
 
         @Override
         public void onClose() {
+            if (!connection.isDone()) {
+                connection.fail(new NetworkException("Connection closed before it was opened"));
+            }
             synchronized (MpnllClient.this) {
                 statusListeners.forEach(ClientStatusListener::disconnected);
             }
@@ -201,6 +238,7 @@ public class MpnllClient {
 
         @Override
         public void onError(Throwable error) {
+            connection.fail(error);
             synchronized (MpnllClient.this) {
                 statusListeners.forEach(it -> it.error(error));
             }

@@ -10,4 +10,9 @@ public class LobbySite extends ClientSite {
 
     }
 
+    @Override
+    protected boolean isInternal() {
+        return true;
+    }
+
 }
