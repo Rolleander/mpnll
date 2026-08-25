@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * JVM file implementation. Browser clients should use a GWT-specific IFileAccess.
- */
+
 public class TempFileAccess implements IFileAccess {
 
     private static final Logger Log = LoggerFactory.getLogger(TempFileAccess.class);

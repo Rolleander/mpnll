@@ -1,8 +1,6 @@
 package com.broll.mpnll.client.persist;
 
-/**
- * Non-persistent fallback used until a platform-specific file access is configured.
- */
+
 public class MemoryFileAccess implements IFileAccess {
 
     private String content;

@@ -3,9 +3,6 @@ package com.broll.mpnll.gwt;
 import com.broll.mpnll.client.persist.IFileAccess;
 import com.google.gwt.storage.client.Storage;
 
-/**
- * Browser persistence backed by localStorage, with an in-memory fallback.
- */
 public class LocalStorageFileAccess implements IFileAccess {
 
     private final Storage storage = Storage.getLocalStorageIfSupported();

@@ -1,9 +1,16 @@
 package com.broll.mpnll.client;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.client.async.ClientFuture;
 import com.broll.mpnll.client.async.ScheduledTask;
 import com.broll.mpnll.client.impl.LobbyLookup;
+import com.broll.mpnll.client.persist.IFileAccess;
+import com.broll.mpnll.client.persist.MemoryFileAccess;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageUtils;
 import com.broll.mpnll.nt.NT_ServerInformation;
@@ -12,11 +19,6 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class MpnllClientAsyncTest {
 
@@ -141,6 +143,16 @@ public class MpnllClientAsyncTest {
         private void finishOpen() {
             connected = true;
             listener.onOpen();
+        }
+
+        @Override
+        public IFileAccess clientAuthAccess() {
+            return new MemoryFileAccess();
+        }
+
+        @Override
+        public IFileAccess lastConnectionAccess() {
+            return new MemoryFileAccess();
         }
     }
 

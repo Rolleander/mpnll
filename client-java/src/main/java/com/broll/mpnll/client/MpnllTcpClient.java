@@ -1,6 +1,8 @@
 package com.broll.mpnll.client;
 
 import com.broll.mpnll.client.async.ScheduledTask;
+import com.broll.mpnll.client.persist.IFileAccess;
+import com.broll.mpnll.client.persist.TempFileAccess;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,5 +50,15 @@ public class MpnllTcpClient implements NativeClient {
     @Override
     public void shutdown() {
         scheduler.shutdownNow();
+    }
+
+    @Override
+    public IFileAccess lastConnectionAccess() {
+        return new TempFileAccess("mpnll-user-auth.dat");
+    }
+
+    @Override
+    public IFileAccess clientAuthAccess() {
+        return new TempFileAccess("mpnll-last-connection.dat");
     }
 }

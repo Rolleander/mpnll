@@ -4,6 +4,7 @@ import com.broll.mpnll.client.ClientConnectionListener;
 import com.broll.mpnll.client.NativeClient;
 import com.broll.mpnll.client.NativeClientRegistry;
 import com.broll.mpnll.client.async.ScheduledTask;
+import com.broll.mpnll.client.persist.IFileAccess;
 import com.google.gwt.user.client.Timer;
 
 public class MpnllWebsocketClient implements NativeClient {
@@ -70,5 +71,15 @@ public class MpnllWebsocketClient implements NativeClient {
     @Override
     public void shutdown() {
         // GWT timers are individually cancelled by completed operations.
+    }
+
+    @Override
+    public IFileAccess clientAuthAccess() {
+        return new LocalStorageFileAccess("mpnll-user-auth");
+    }
+
+    @Override
+    public IFileAccess lastConnectionAccess() {
+        return new LocalStorageFileAccess("mpnll-last-connection");
     }
 }

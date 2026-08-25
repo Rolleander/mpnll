@@ -17,11 +17,7 @@ import java.util.stream.Collectors;
 public class ListLobbies extends ClientOperation<LookupResult> {
 
     private final String ip;
-
-    public ListLobbies() {
-        this(null);
-    }
-
+    
     public ListLobbies(String ip) {
         this.ip = ip;
     }

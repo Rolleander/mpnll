@@ -8,10 +8,9 @@ public final class NativeClientRegistry {
 
     public static NativeClient createClient() {
         if (NATIVE_CLIENT_FACTORY == null) {
-            throw new IllegalStateException(
-                "No native client factory is installed; pass a NativeClient to the MpnllClient constructor"
-            );
+            throw new IllegalStateException("No native client factory is installed");
         }
         return NATIVE_CLIENT_FACTORY.get();
     }
+
 }

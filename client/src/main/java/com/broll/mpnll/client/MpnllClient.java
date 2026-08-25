@@ -15,7 +15,6 @@ import com.broll.mpnll.client.lobby.LobbyInfo;
 import com.broll.mpnll.client.persist.ClientAuthentication;
 import com.broll.mpnll.client.persist.IFileAccess;
 import com.broll.mpnll.client.persist.LastConnection;
-import com.broll.mpnll.client.persist.MemoryFileAccess;
 import com.broll.mpnll.client.site.ClientSite;
 import com.broll.mpnll.client.site.SiteHandler;
 import com.broll.mpnll.message.MessageRegistryImpl;
@@ -37,8 +36,8 @@ public class MpnllClient {
     private final SiteHandler siteHandler = new SiteHandler(this);
     private MessageRegistryImpl messageRegistry = new MessageRegistryImpl();
     private List<ClientStatusListener> statusListeners = new ArrayList<>();
-    private ClientAuthentication clientAuthentication = new ClientAuthentication(new MemoryFileAccess());
-    private LastConnection lastConnection = new LastConnection(new MemoryFileAccess());
+    private ClientAuthentication clientAuthentication;
+    private LastConnection lastConnection;
     private String host;
     private String version = "0";
     private Lobby connectedLobby;
@@ -52,8 +51,9 @@ public class MpnllClient {
             throw new IllegalArgumentException("nativeClient must not be null");
         }
         this.nativeClient = nativeClient;
+        configureFileAccess(nativeClient.clientAuthAccess(), nativeClient.lastConnectionAccess());
     }
-    
+
     public void configureFileAccess(IFileAccess authFileAccess, IFileAccess lastConnectionFileAccess) {
         this.clientAuthentication = new ClientAuthentication(authFileAccess);
         this.lastConnection = new LastConnection(lastConnectionFileAccess);

@@ -1,6 +1,7 @@
 package com.broll.mpnll.client;
 
 import com.broll.mpnll.client.async.ScheduledTask;
+import com.broll.mpnll.client.persist.IFileAccess;
 
 public interface NativeClient {
 
@@ -15,4 +16,8 @@ public interface NativeClient {
     ScheduledTask schedule(int delayMillis, Runnable action);
 
     void shutdown();
+
+    IFileAccess clientAuthAccess();
+    
+    IFileAccess lastConnectionAccess();
 }
