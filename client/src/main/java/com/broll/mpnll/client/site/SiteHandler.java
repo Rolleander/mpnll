@@ -1,6 +1,7 @@
 package com.broll.mpnll.client.site;
 
 import com.broll.mpnll.client.MpnllClient;
+import com.broll.mpnll.client.impl.LobbySite;
 import com.google.protobuf.Message;
 
 import java.util.ArrayList;
@@ -11,8 +12,9 @@ public class SiteHandler {
     private final MpnllClient client;
     private final List<ClientSite> sites = new ArrayList<>();
 
-    public SiteHandler(MpnllClient client) {
+    public SiteHandler(MpnllClient client, Runnable deactivateLobbyCallback) {
         this.client = client;
+        addSite(new LobbySite(deactivateLobbyCallback));
     }
 
     public synchronized void addSite(ClientSite site) {

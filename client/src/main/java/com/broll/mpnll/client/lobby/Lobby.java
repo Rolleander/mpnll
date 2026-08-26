@@ -43,6 +43,14 @@ public class Lobby extends LobbyInfo {
         this.chatListeners.remove(listener);
     }
 
+    public List<LobbyListener> getLobbyListeners() {
+        return lobbyListeners;
+    }
+
+    public List<ChatListener> getChatListeners() {
+        return chatListeners;
+    }
+
     private void assureConnected() {
         if (!client.isConnected()) {
             throw new NetworkException("Cannot send to unconnected lobby");

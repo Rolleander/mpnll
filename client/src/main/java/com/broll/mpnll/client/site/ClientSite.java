@@ -1,6 +1,7 @@
 package com.broll.mpnll.client.site;
 
 import com.broll.mpnll.client.MpnllClient;
+import com.broll.mpnll.client.lobby.Lobby;
 import com.google.protobuf.Message;
 
 import java.util.HashMap;
@@ -9,8 +10,8 @@ import java.util.function.Consumer;
 
 public abstract class ClientSite {
 
-    private MpnllClient client;
     private final Map<Class<?>, Consumer<Message>> receivers = new HashMap<>();
+    private MpnllClient client;
 
     protected abstract void registerReceivers(MessageReceiverRegistry registry);
 
@@ -39,4 +40,11 @@ public abstract class ClientSite {
         return false;
     }
 
+    public MpnllClient getClient() {
+        return client;
+    }
+
+    public Lobby getLobby() {
+        return client.getConnectedLobby();
+    }
 }

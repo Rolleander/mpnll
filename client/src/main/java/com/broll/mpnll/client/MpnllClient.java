@@ -33,7 +33,6 @@ public class MpnllClient {
     private static final int CONNECTION_TIMEOUT_MILLIS = 5000;
 
     private final NativeClient nativeClient;
-    private final SiteHandler siteHandler = new SiteHandler(this);
     private MessageRegistryImpl messageRegistry = new MessageRegistryImpl();
     private List<ClientStatusListener> statusListeners = new ArrayList<>();
     private ClientAuthentication clientAuthentication;
@@ -41,6 +40,7 @@ public class MpnllClient {
     private String host;
     private String version = "0";
     private Lobby connectedLobby;
+    private final SiteHandler siteHandler = new SiteHandler(this, this::deactivateLobby);
 
     public MpnllClient() {
         this(NativeClientRegistry.createClient());
@@ -208,6 +208,7 @@ public class MpnllClient {
         Lobby left = this.connectedLobby;
         this.connectedLobby = null;
         statusListeners.forEach(it -> it.leftLobby(left));
+        left.getLobbyListeners().forEach(it -> it.closed(left));
     }
 
     private class Listener implements ClientConnectionListener {

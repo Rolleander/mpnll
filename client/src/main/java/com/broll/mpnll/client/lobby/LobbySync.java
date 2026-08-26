@@ -30,6 +30,7 @@ public final class LobbySync {
         syncInfo(lobby, update.getLobbyInfo());
         syncUsers(lobby, update.getPlayersList());
         lobby.setOwner(lobby.getUser(update.getOwner()));
+        lobby.lobbyListeners.forEach(it -> it.lobbyUpdated(lobby));
     }
 
     private static void syncUsers(Lobby lobby, List<NT_LobbyPlayerInfo> users) {

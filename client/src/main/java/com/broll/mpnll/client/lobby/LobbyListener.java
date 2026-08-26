@@ -8,9 +8,6 @@ public interface LobbyListener {
 
     void userLeft(Lobby lobby, User user);
 
-    void kickedFromLobby(Lobby lobby);
-
     void closed(Lobby lobby);
 
-    void disconnected(Lobby lobby);
 }
