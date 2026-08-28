@@ -17,6 +17,9 @@ buildscript {
 allprojects {
   apply plugin: 'java-library'
 
+  group = 'com.broll.mpnll'
+  version = projectVersion
+
   java.sourceCompatibility = 8
   java.targetCompatibility = 8
 }
@@ -34,11 +37,12 @@ configure(subprojects) {
 }
 
 subprojects {
-  version = '$projectVersion'
   ext.appName = 'mpnll'
 
-  dependencies {
-    implementation libs.log4j
+  if (name != 'protocol-gradle-plugin') {
+    dependencies {
+      implementation libs.log4j
+    }
   }
   repositories {
     mavenCentral()
@@ -49,4 +53,38 @@ subprojects {
     maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
     maven { url 'https://jitpack.io' }
   }
+}
+
+def publishedLibraries = [
+    project(':shared'),
+    project(':server'),
+    project(':client'),
+    project(':client-gwt'),
+    project(':client-java')
+]
+def publishedProjects = publishedLibraries + project(':protocol-gradle-plugin')
+
+configure(publishedLibraries) {
+  apply plugin: 'maven-publish'
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+        artifactId = project.name
+      }
+    }
+  }
+}
+
+tasks.register('publishAllToMavenLocal') {
+  group = 'publishing'
+  description = 'Publishes all MPNLL artifacts to the local Maven repository.'
+  dependsOn publishedProjects.collect { it.tasks.named('publishToMavenLocal') }
+}
+
+tasks.register('publishAll') {
+  group = 'publishing'
+  description = 'Publishes all MPNLL artifacts to the local Maven repository.'
+  dependsOn tasks.named('publishAllToMavenLocal')
 }

@@ -1,0 +1,35 @@
+plugins {
+  id 'java-gradle-plugin'
+  id 'maven-publish'
+}
+
+def versionCatalog = extensions.getByType(VersionCatalogsExtension).named('libs')
+def protobufVersion = versionCatalog.findVersion('protobuf').get().requiredVersion
+def protobufPluginVersion = versionCatalog.findVersion('protobuf-plugin').get().requiredVersion
+
+dependencies {
+  implementation "com.google.protobuf:protobuf-gradle-plugin:${protobufPluginVersion}"
+  testImplementation gradleTestKit()
+  testImplementation 'junit:junit:4.13.2'
+}
+
+gradlePlugin {
+  plugins {
+    mpnllProtocol {
+      id = 'com.broll.mpnll.protocol'
+      implementationClass = 'com.broll.mpnll.gradle.MpnllProtocolPlugin'
+      displayName = 'MPNLL Protocol Plugin'
+      description = 'Generates and packages protobuf messages shared by MPNLL servers and clients.'
+    }
+  }
+}
+
+tasks.named('processResources') {
+  filesMatching('mpnll-protocol-plugin.properties') {
+    expand protobufVersion: protobufVersion
+  }
+}
+
+tasks.named('test') {
+  dependsOn tasks.named('pluginUnderTestMetadata')
+}

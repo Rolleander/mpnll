@@ -1,14 +1,15 @@
 dependencies {
-  implementation(project(':client')) {
+  api(project(':client')) {
     exclude group: 'com.google.protobuf', module: 'protobuf-java'
   }
-  implementation libs.protobuf.gwt
+  api libs.protobuf.gwt
   implementation libs.gwt.dev
   implementation libs.gwt.user
 }
 
 tasks.named('jar') {
   from sourceSets.main.allJava
+  from('src/main/super')
   from('src/main/java') {
     include '**/*.gwt.xml'
   }

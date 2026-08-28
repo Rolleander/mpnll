@@ -31,5 +31,5 @@ dependencies {
   implementation libs.guava
   implementation libs.kryo
 
-  implementation project(':shared')
+  api project(':shared')
 }
