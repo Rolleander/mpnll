@@ -6,4 +6,10 @@ dependencies {
   testImplementation project(':server')
   testImplementation project(':client-java')
   testImplementation 'junit:junit:4.13.2'
+  testImplementation 'org.seleniumhq.selenium:selenium-java:4.47.0'
+}
+
+tasks.named('test') {
+  dependsOn ':client-gwt:gwtCompileSmoke'
+  systemProperty 'gwtSmokeWar', project(':client-gwt').layout.buildDirectory.dir('gwt-smoke').get().asFile
 }

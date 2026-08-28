@@ -47,15 +47,12 @@ public class SmokeTestEntryPoint implements EntryPoint {
         panel.add(status);
         panel.add(events);
         RootPanel.get("smoke-test").add(panel);
-
+        client = new MpnllClient(new MpnllWebsocketClient());
+        client.registerMessages(NtLobbyMessagesRegistry::register);
         runSanityTest();
     }
 
     private void runSanityTest() {
-        closeClient();
-        client = new MpnllClient(new MpnllWebsocketClient());
-        client.registerMessages(NtLobbyMessagesRegistry::register);
-
         setStatus("LISTING", "Connecting to " + url.getText() + " and requesting lobby list");
         client.listLobbies(url.getText())
             .onSuccess(this::pass)
