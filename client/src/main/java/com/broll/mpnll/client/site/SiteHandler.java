@@ -4,21 +4,15 @@ import com.broll.mpnll.client.MpnllClient;
 import com.broll.mpnll.client.impl.LobbySite;
 import com.google.protobuf.Message;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class SiteHandler {
 
-    private static final Logger Log = LoggerFactory.getLogger(SiteHandler.class);
-
     private final MpnllClient client;
     private final List<ClientSite> sites = new ArrayList<>();
-    private Consumer<Message> unknownMessageReceiver = message ->
-        Log.error("No client receiver registered for network object {}", message);
+    private Consumer<Message> unknownMessageReceiver = message -> { };
 
     public SiteHandler(MpnllClient client, Runnable deactivateLobbyCallback) {
         this.client = client;

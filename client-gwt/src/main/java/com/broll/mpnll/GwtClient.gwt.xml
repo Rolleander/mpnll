@@ -3,5 +3,6 @@
 <module>
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.broll.mpnll.ClientTransport" />
+  <super-source path="super" />
   <source path="gwt" />
 </module>

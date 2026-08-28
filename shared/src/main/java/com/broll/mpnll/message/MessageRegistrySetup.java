@@ -10,6 +10,7 @@ public interface MessageRegistrySetup {
 
     default <T, M extends Message> void registerMapping(
         Class<T> objectType,
+        String protobufTypeName,
         M messageType,
         Function<T, M> encoder,
         Function<M, T> decoder

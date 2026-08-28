@@ -14,22 +14,33 @@ client.listLobbies("ws://localhost:8081/")
 For JVM callers that want `CompletableFuture`, use
 `CompletableFutureAdapter.from(client.listLobbies(...))` from `client-java`.
 
-GWT clients configure browser persistence through the existing `IFileAccess`
-abstraction. Once a GWT-compatible message runtime is configured, the platform
-setup is:
+GWT clients use `LocalStorageFileAccess` through the existing `IFileAccess`
+abstraction. The GWT transport supplies it automatically:
 
 ```java
-MpnllClient client = new MpnllClient(
-    new MpnllWebsocketClient(),
-    new LocalStorageFileAccess("mpnll-auth"),
-    new LocalStorageFileAccess("mpnll-last-connection")
-);
+MpnllClient client = new MpnllClient(new MpnllWebsocketClient());
+client.registerMessages(NtLobbyMessagesRegistry::register);
 ```
 
 The core client uses in-memory storage until platform-specific file access is
 configured. `TempFileAccess` is JVM-only and therefore lives in `client-java`.
 
-The transport, asynchronous result, timer, and persistence layers pass strict
-GWT compilation. The complete `MpnllClient` is not yet part of that GWT module
-because the shared messages currently use the JVM `protobuf-java` runtime; that
-message-runtime migration is a separate remaining step.
+The same generated messages from `shared` are used on both targets. JVM modules
+use `protobuf-java`; `client-gwt` excludes that JVM runtime and substitutes the
+GWT-compatible `protobuf-gwt` implementation of the same API.
+
+Object mappings include their protobuf schema type name explicitly, so they do
+not depend on descriptor reflection and work on both targets:
+
+```java
+registry.registerMapping(
+    Settings.class,
+    "example.SettingsMessage",
+    SettingsMessage.getDefaultInstance(),
+    SettingsCodec::encode,
+    SettingsCodec::decode
+);
+```
+
+Run the end-to-end lobby-list sanity page with `:server:start` and
+`:client-gwt:gwtSmoke`, then open `http://localhost:8888/smoke/`.

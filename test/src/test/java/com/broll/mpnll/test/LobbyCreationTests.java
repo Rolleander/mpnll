@@ -78,6 +78,7 @@ public class LobbyCreationTests extends MpnllIntegrationTest {
     private static void registerSettingsMapping(MessageRegistrySetup registry) {
         registry.registerMapping(
             Settings.class,
+            "google.protobuf.Struct",
             Struct.getDefaultInstance(),
             settings -> Struct.newBuilder()
                 .putFields("name", Value.newBuilder().setStringValue(settings.name).build())

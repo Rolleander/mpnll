@@ -1,8 +1,9 @@
 [versions]
-protobuf = "3.21.12"
+protobuf = "3.25.8"
+protobuf-gwt = "3.25.8-1"
 protobuf-plugin = "0.9.4"
 netty = "4.1.74.Final"
-gwt = "2.9.0"
+gwt = "2.13.1"
 log4j = "1.7.29"
 guava = "28.2-jre"
 annotations = "2.14"
@@ -13,6 +14,7 @@ kryo = "5.6.2"
 
 [libraries]
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+protobuf-gwt = { module = "com.vertispan.protobuf:protobuf-gwt", version.ref = "protobuf-gwt" }
 netty-all = { module = "io.netty:netty-all", version.ref = "netty" }
 netty-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty" }
 netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
@@ -28,9 +30,8 @@ commons-collections = { module = "org.apache.commons:commons-collections4", vers
 kryo = { module = "com.esotericsoftware.kryo:kryo5", version.ref = "kryo" }
 
 
-gwt-user = { module = "com.google.gwt:gwt-user", version.ref = "gwt" }
-gwt-dev = { module = "com.google.gwt:gwt-dev", version.ref = "gwt" }
+gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
+gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }
 
 [plugins]
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
-

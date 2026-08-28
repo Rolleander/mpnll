@@ -2,7 +2,7 @@ package com.broll.mpnll.message;
 
 import com.broll.mpnll.NetworkException;
 import com.google.protobuf.Any;
-import com.google.protobuf.Descriptors;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
@@ -14,7 +14,7 @@ import java.util.function.Function;
 public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetup {
 
     private int registerIndex = 0;
-    private Map<Descriptors.Descriptor, Integer> types = new HashMap<>();
+    private Map<Class<?>, Integer> types = new HashMap<>();
     private Map<Integer, Parser> parsers = new HashMap<>();
     private Map<Class<?>, ObjectMapping<?, ?>> mappingsByObjectType = new HashMap<>();
     private Map<String, ObjectMapping<?, ?>> mappingsByMessageType = new HashMap<>();
@@ -27,21 +27,22 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
         Message messageType = builder.getDefaultInstanceForType();
         Parser parser = messageType.getParserForType();
         parsers.put(registerIndex, parser);
-        types.put(builder.getDescriptorForType(), registerIndex);
+        types.put(messageType.getClass(), registerIndex);
         registerIndex++;
-        registerIdentityMapping(messageType);
     }
 
     @Override
     public <T, M extends Message> void registerMapping(
         Class<T> objectType,
+        String protobufTypeName,
         M messageType,
         Function<T, M> encoder,
         Function<M, T> decoder
     ) {
-        ObjectMapping<T, M> mapping = new ObjectMapping<>(messageType, encoder, decoder);
+        ObjectMapping<T, M> mapping =
+            new ObjectMapping<>(protobufTypeName, messageType, encoder, decoder);
         mappingsByObjectType.put(objectType, mapping);
-        mappingsByMessageType.put(messageType.getDescriptorForType().getFullName(), mapping);
+        mappingsByMessageType.put(protobufTypeName, mapping);
     }
 
     @Override
@@ -55,7 +56,13 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
 
     @Override
     public int getType(Message message) {
-        return types.get(message.getDescriptorForType());
+        Integer type = types.get(message.getClass());
+        if (type == null) {
+            throw new IllegalArgumentException(
+                "Message type is not registered: " + message.getClass().getName()
+            );
+        }
+        return type;
     }
 
     @Override
@@ -69,7 +76,11 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
                 "No message mapping registered for " + value.getClass().getName()
             );
         }
-        return Any.pack(mapping.encode(value));
+        Message encoded = mapping.encode(value);
+        return Any.newBuilder()
+            .setTypeUrl("type.googleapis.com/" + mapping.protobufTypeName)
+            .setValue(ByteString.copyFrom(encoded.toByteArray()))
+            .build();
     }
 
     @Override
@@ -95,12 +106,7 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
                 "No message mapping registered for " + objectType.getName()
             );
         }
-        return objectType.cast(mapping.decode(value));
-    }
-
-    private void registerIdentityMapping(Message messageType) {
-        Class<Message> objectType = (Class<Message>) messageType.getClass();
-        registerMapping(objectType, messageType, Function.identity(), Function.identity());
+        return (T) mapping.decode(value);
     }
 
     private String messageTypeName(Any value) {
@@ -111,11 +117,18 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
 
     private static final class ObjectMapping<T, M extends Message> {
 
+        private final String protobufTypeName;
         private final M messageType;
         private final Function<T, M> encoder;
         private final Function<M, T> decoder;
 
-        private ObjectMapping(M messageType, Function<T, M> encoder, Function<M, T> decoder) {
+        private ObjectMapping(
+            String protobufTypeName,
+            M messageType,
+            Function<T, M> encoder,
+            Function<M, T> decoder
+        ) {
+            this.protobufTypeName = protobufTypeName;
             this.messageType = messageType;
             this.encoder = encoder;
             this.decoder = decoder;
@@ -126,7 +139,7 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
         }
 
         private T decode(Any value) {
-            String expectedType = messageType.getDescriptorForType().getFullName();
+            String expectedType = protobufTypeName;
             String typeUrl = value.getTypeUrl();
             if (!typeUrl.equals(expectedType) && !typeUrl.endsWith("/" + expectedType)) {
                 throw new NetworkException(
