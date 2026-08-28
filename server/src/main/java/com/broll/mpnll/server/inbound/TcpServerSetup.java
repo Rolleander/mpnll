@@ -7,8 +7,12 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 
 public final class TcpServerSetup {
+
+    private static final int MAX_FRAME_LENGTH = 16 * 1024 * 1024;
 
     public static Channel init(
         SetupContext context,
@@ -23,6 +27,8 @@ public final class TcpServerSetup {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline().addLast(
+                        new LengthFieldBasedFrameDecoder(MAX_FRAME_LENGTH, 0, 4, 0, 4),
+                        new LengthFieldPrepender(4),
                         new ProtobufTcpInboundHandler(
                             context.clientConnectionRegistry,
                             context.messageRegistry,

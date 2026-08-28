@@ -9,8 +9,11 @@ import com.broll.mpnll.server.connection.ClientConnectionRegistryImpl;
 import com.broll.mpnll.server.inbound.SetupContext;
 import com.broll.mpnll.server.inbound.TcpServerSetup;
 import com.broll.mpnll.server.inbound.WebsocketServerSetup;
+import com.broll.mpnll.server.impl.ConnectionSite;
+import com.broll.mpnll.server.impl.LobbySite;
 import com.broll.mpnll.server.lobby.LobbyHandler;
 import com.broll.mpnll.server.site.CloningSitesHandler;
+import com.broll.mpnll.server.site.IUnknownMessageReceiver;
 import com.broll.mpnll.server.site.NetworkSite;
 import com.broll.mpnll.server.site.SitesHandler;
 import com.broll.mpnll.server.user.UserRegistry;
@@ -41,7 +44,8 @@ public class MpnllServer {
     private final LobbyHandler lobbyHandler = new LobbyHandler(messageRegistry);
     private final SitesHandler sitesHandler = new CloningSitesHandler();
     private final UserRegistry userRegistry = new UserRegistryImpl();
-    private final ClientConnectionRegistry sessionRegistry = new ClientConnectionRegistryImpl(messageRegistry, userRegistry);
+    private final ClientConnectionRegistry sessionRegistry =
+        new ClientConnectionRegistryImpl(messageRegistry, userRegistry, sitesHandler);
     private Channel tcpChannel, wsChannel;
     private EventLoopGroup bossGroup, workerGroup;
     private boolean open = false;
@@ -51,6 +55,8 @@ public class MpnllServer {
     private String ip;
 
     public MpnllServer() {
+        addSite(new ConnectionSite(userRegistry));
+        addSite(new LobbySite());
     }
 
     public String getVersion() {
@@ -73,17 +79,29 @@ public class MpnllServer {
         return ip;
     }
 
+    public int getTcpPort() {
+        return ((InetSocketAddress) tcpChannel.localAddress()).getPort();
+    }
+
+    public int getWebsocketPort() {
+        return ((InetSocketAddress) wsChannel.localAddress()).getPort();
+    }
+
+    public LobbyHandler getLobbyHandler() {
+        return lobbyHandler;
+    }
+
     public Map<Class<NetworkSite>, NetworkSite> getSiteInstances(ClientConnection connection) {
         return sitesHandler.getSiteInstances(connection);
     }
 
     public void registerMessages(Consumer<MessageRegistrySetup> registry) {
-        registry.accept(messageRegistry::register);
+        registry.accept(messageRegistry);
     }
 
     public void addSite(NetworkSite site) {
-        sitesHandler.add(site);
         site.init(this, lobbyHandler);
+        sitesHandler.add(site);
     }
 
     public void removeSite(NetworkSite site) {
@@ -92,6 +110,10 @@ public class MpnllServer {
 
     public void clearSites() {
         sitesHandler.clear();
+    }
+
+    public void setUnknownMessageReceiver(IUnknownMessageReceiver receiver) {
+        sitesHandler.setUnknownMessageReceiver(receiver);
     }
 
     public void open(int tcpPort, int websocketPort) throws InterruptedException {

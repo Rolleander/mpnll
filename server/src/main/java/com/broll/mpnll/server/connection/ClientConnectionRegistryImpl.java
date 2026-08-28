@@ -3,6 +3,7 @@ package com.broll.mpnll.server.connection;
 import com.broll.mpnll.message.MessageRegistry;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.server.inbound.ClientInboundHandler;
+import com.broll.mpnll.server.site.SitesHandler;
 import com.broll.mpnll.server.user.User;
 import com.broll.mpnll.server.user.UserRegistry;
 import com.broll.mpnll.server.utils.ReadWriteLockMap;
@@ -17,10 +18,16 @@ public class ClientConnectionRegistryImpl implements ClientConnectionRegistry {
     private final MessageRegistry messageRegistry;
     private final Map<ChannelHandlerContext, ClientConnection> connections = new ReadWriteLockMap<>();
     private final UserRegistry userRegistry;
+    private final SitesHandler sitesHandler;
 
-    public ClientConnectionRegistryImpl(MessageRegistryImpl messageRegistry, UserRegistry userRegistry) {
+    public ClientConnectionRegistryImpl(
+        MessageRegistryImpl messageRegistry,
+        UserRegistry userRegistry,
+        SitesHandler sitesHandler
+    ) {
         this.messageRegistry = messageRegistry;
         this.userRegistry = userRegistry;
+        this.sitesHandler = sitesHandler;
     }
 
     @Override
@@ -31,11 +38,14 @@ public class ClientConnectionRegistryImpl implements ClientConnectionRegistry {
             handler
         );
         connections.put(context, connection);
+        sitesHandler.initConnection(connection);
     }
 
     @Override
     public void remove(ChannelHandlerContext context) {
-        inactiveConnection(connections.get(context));
+        ClientConnection connection = connections.get(context);
+        inactiveConnection(connection);
+        sitesHandler.discardConnection(connection);
         connections.remove(context);
     }
 

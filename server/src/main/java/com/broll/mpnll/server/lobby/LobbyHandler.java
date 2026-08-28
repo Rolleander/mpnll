@@ -3,8 +3,6 @@ package com.broll.mpnll.server.lobby;
 import com.broll.mpnll.message.MessageRegistry;
 import com.broll.mpnll.server.user.User;
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Message;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +37,7 @@ public class LobbyHandler {
         this.stateListeners.remove(listener);
     }
 
-    public <S extends Message> void acceptLobbyCreation(Class<S> settingsType, LobbyCreationCallback<S> callback) {
+    public <S> void acceptLobbyCreation(Class<S> settingsType, LobbyCreationCallback<S> callback) {
         lobbyCreationReceiver = new LobbyCreationReceiver<>(settingsType, callback);
     }
 
@@ -56,11 +54,12 @@ public class LobbyHandler {
         return null;
     }
 
-    public void openLobby(Consumer<Lobby> configure) {
+    public Lobby openLobby(Consumer<Lobby> configure) {
         Lobby lobby = new Lobby(this, messageRegistry);
         lobby.id = registry.newId();
         configure.accept(lobby);
         openLobby(lobby);
+        return lobby;
     }
 
     private void openLobby(Lobby lobby) {
@@ -91,7 +90,7 @@ public class LobbyHandler {
         return registry.all();
     }
 
-    private class LobbyCreationReceiver<S extends Message> {
+    private class LobbyCreationReceiver<S> {
         private Class<S> settingsType;
         private LobbyCreationCallback<S> callback;
 
@@ -101,12 +100,8 @@ public class LobbyHandler {
         }
 
         boolean allowCreation(User requester, Lobby lobby, Any settings) {
-            try {
-                S parsedSettings = settings.unpack(settingsType);
-                return callback.allowCreation(requester, lobby, parsedSettings);
-            } catch (InvalidProtocolBufferException e) {
-                throw new RuntimeException(e);
-            }
+            S parsedSettings = messageRegistry.unpack(settings, settingsType);
+            return callback.allowCreation(requester, lobby, parsedSettings);
         }
     }
 }

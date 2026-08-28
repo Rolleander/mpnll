@@ -181,6 +181,46 @@ public class Lobby {
         return owner;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getPlayerLimit() {
+        return playerLimit;
+    }
+
+    public void setPlayerLimit(int playerLimit) {
+        this.playerLimit = playerLimit;
+    }
+
+    public boolean isClosed() {
+        return closed;
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public LobbySettingsBuilder getLobbySettingsBuilder() {
+        return lobbySettingsBuilder;
+    }
+
+    public void setLobbySettingsBuilder(LobbySettingsBuilder lobbySettingsBuilder) {
+        this.lobbySettingsBuilder = lobbySettingsBuilder;
+    }
+
     @Override
     public String toString() {
         return "Lobby{" +

@@ -22,6 +22,7 @@ public class CloningSitesHandler extends SitesHandler {
     private Map<ClientConnection, Map<Class<NetworkSite>, NetworkSite>> activeSites = new HashMap<>();
 
     public CloningSitesHandler() {
+        kryo.setRegistrationRequired(false);
         kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
     }
 
@@ -105,5 +106,4 @@ public class CloningSitesHandler extends SitesHandler {
         }
     }
 }
-
 

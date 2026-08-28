@@ -50,7 +50,7 @@ public class ListLobbies extends ClientOperation<LookupResult> {
 
     private LobbyInfo toLobbyInfo(NT_LobbyInformation info) {
         LobbyInfo lobby = new LobbyInfo();
-        LobbySync.syncInfo(lobby, info, getConnectedIp());
+        LobbySync.syncInfo(lobby, info, getConnectedIp(), getClient());
         return lobby;
     }
 }

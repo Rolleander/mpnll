@@ -33,10 +33,13 @@ public class LobbyMessageBuilder {
     }
 
     private Any buildSettings() {
-        if (lobby.data == null || lobby.lobbySettingsBuilder == null) {
+        if (lobby.data == null) {
             return Any.getDefaultInstance();
         }
-        return lobby.lobbySettingsBuilder.build(lobby);
+        if (lobby.lobbySettingsBuilder != null) {
+            return lobby.lobbySettingsBuilder.build(lobby);
+        }
+        return lobby.messageRegistry.pack(lobby.data);
     }
 
 }

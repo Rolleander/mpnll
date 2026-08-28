@@ -27,7 +27,7 @@ public final class LobbySync {
     }
 
     public static void syncLobby(Lobby lobby, NT_LobbyUpdate update) {
-        syncInfo(lobby, update.getLobbyInfo());
+        syncInfo(lobby, update.getLobbyInfo(), null, lobby.getClient());
         syncUsers(lobby, update.getPlayersList());
         lobby.setOwner(lobby.getUser(update.getOwner()));
         lobby.lobbyListeners.forEach(it -> it.lobbyUpdated(lobby));
@@ -39,7 +39,7 @@ public final class LobbySync {
             if (existing == null) {
                 userJoined(lobby, user);
             } else {
-                syncUser(existing, user);
+                syncUser(lobby, existing, user);
             }
         });
         List<Integer> currentIds = users.stream().map(NT_LobbyPlayerInfo::getId).collect(Collectors.toList());
@@ -50,7 +50,7 @@ public final class LobbySync {
 
     private static void userJoined(Lobby lobby, NT_LobbyPlayerInfo info) {
         User user = new User(info.getId(), lobby);
-        syncUser(user, info);
+        syncUser(lobby, user, info);
         lobby.getUsersMap().put(info.getId(), user);
         lobby.lobbyListeners.forEach(it -> it.userJoined(lobby, user));
     }
@@ -60,9 +60,9 @@ public final class LobbySync {
         lobby.lobbyListeners.forEach(it -> it.userLeft(lobby, user));
     }
 
-    private static void syncUser(User user, NT_LobbyPlayerInfo info) {
+    private static void syncUser(Lobby lobby, User user, NT_LobbyPlayerInfo info) {
         user.setName(info.getName());
-        user.setSettings(info.getSettings());
+        user.setSettings(lobby.getClient().getMessageRegistry().unpack(info.getSettings()));
         user.setBot(info.getBot());
     }
 
@@ -71,6 +71,15 @@ public final class LobbySync {
     }
 
     public static void syncInfo(LobbyInfo lobby, NT_LobbyInformation info, String ip) {
+        syncInfo(lobby, info, ip, null);
+    }
+
+    public static void syncInfo(
+        LobbyInfo lobby,
+        NT_LobbyInformation info,
+        String ip,
+        MpnllClient client
+    ) {
         if (ip != null) {
             lobby.setServerIp(ip);
         }
@@ -78,7 +87,7 @@ public final class LobbySync {
         lobby.setLobbyId(info.getLobbyId());
         lobby.setUserCount(info.getPlayerCount());
         lobby.setUserLimit(info.getPlayerLimit());
-        lobby.setSettings(info.getSettings());
+        lobby.setSettings(client == null ? info.getSettings() : client.getMessageRegistry().unpack(info.getSettings()));
     }
 
 }

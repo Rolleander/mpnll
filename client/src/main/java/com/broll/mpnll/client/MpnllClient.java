@@ -17,10 +17,10 @@ import com.broll.mpnll.client.persist.IFileAccess;
 import com.broll.mpnll.client.persist.LastConnection;
 import com.broll.mpnll.client.site.ClientSite;
 import com.broll.mpnll.client.site.SiteHandler;
+import com.broll.mpnll.message.MessageRegistry;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageRegistrySetup;
 import com.broll.mpnll.message.MessageUtils;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class MpnllClient {
     }
 
     public void registerMessages(Consumer<MessageRegistrySetup> registry) {
-        registry.accept(messageRegistry::register);
+        registry.accept(messageRegistry);
     }
 
     public synchronized void open(String host) {
@@ -108,6 +108,10 @@ public class MpnllClient {
 
     public void clearSites() {
         this.siteHandler.clearSites();
+    }
+
+    public void setUnknownMessageReceiver(Consumer<Message> receiver) {
+        this.siteHandler.setUnknownMessageReceiver(receiver);
     }
 
     public void addStatusListener(ClientStatusListener listener) {
@@ -211,6 +215,10 @@ public class MpnllClient {
         left.getLobbyListeners().forEach(it -> it.closed(left));
     }
 
+    public MessageRegistry getMessageRegistry() {
+        return messageRegistry;
+    }
+
     private class Listener implements ClientConnectionListener {
 
         private final ClientPromise<Void> connection;
@@ -250,12 +258,8 @@ public class MpnllClient {
             int type = MessageUtils.getMessageType(data);
             byte[] content = MessageUtils.getMessageContent(data);
             synchronized (MpnllClient.this) {
-                try {
-                    Message message = messageRegistry.parseMessage(content, type);
-                    siteHandler.pass(message);
-                } catch (InvalidProtocolBufferException e) {
-                    throw new NetworkException(e);
-                }
+                Message message = messageRegistry.parseMessage(content, type);
+                siteHandler.pass(message);
             }
         }
     }

@@ -102,6 +102,10 @@ public class Lobby extends LobbyInfo {
         return myUserId;
     }
 
+    MpnllClient getClient() {
+        return client;
+    }
+
     Map<Integer, User> getUsersMap() {
         return users;
     }

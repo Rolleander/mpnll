@@ -50,8 +50,8 @@ public class ProtobufTcpInboundHandler extends SimpleChannelInboundHandler<ByteB
 
     @Override
     public void send(ChannelHandlerContext context, byte[] data) {
-        ByteBuf byteBuf = context.alloc().buffer();
-        byteBuf.readBytes(data);
-        context.writeAndFlush(data);
+        ByteBuf byteBuf = context.alloc().buffer(data.length);
+        byteBuf.writeBytes(data);
+        context.writeAndFlush(byteBuf);
     }
 }

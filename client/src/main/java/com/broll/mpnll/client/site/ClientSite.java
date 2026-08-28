@@ -32,6 +32,10 @@ public abstract class ClientSite {
         }
     }
 
+    public boolean receives(Class<?> messageType) {
+        return receivers.containsKey(messageType);
+    }
+
     protected void send(Message message) {
         client.send(message);
     }
