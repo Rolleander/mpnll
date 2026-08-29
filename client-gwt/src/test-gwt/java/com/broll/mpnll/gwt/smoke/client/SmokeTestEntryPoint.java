@@ -1,6 +1,5 @@
 package com.broll.mpnll.gwt.smoke.client;
 
-import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.client.MpnllClient;
 import com.broll.mpnll.client.impl.LobbyLookup;
 import com.broll.mpnll.gwt.MpnllWebsocketClient;
@@ -48,7 +47,6 @@ public class SmokeTestEntryPoint implements EntryPoint {
         panel.add(events);
         RootPanel.get("smoke-test").add(panel);
         client = new MpnllClient(new MpnllWebsocketClient());
-        client.registerMessages(NtLobbyMessagesRegistry::register);
         runSanityTest();
     }
 

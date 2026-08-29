@@ -1,16 +1,17 @@
 package com.broll.mpnll.server;
 
+import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageRegistrySetup;
 import com.broll.mpnll.message.MessageUtils;
 import com.broll.mpnll.server.connection.ClientConnection;
 import com.broll.mpnll.server.connection.ClientConnectionRegistry;
 import com.broll.mpnll.server.connection.ClientConnectionRegistryImpl;
+import com.broll.mpnll.server.impl.ConnectionSite;
+import com.broll.mpnll.server.impl.LobbySite;
 import com.broll.mpnll.server.inbound.SetupContext;
 import com.broll.mpnll.server.inbound.TcpServerSetup;
 import com.broll.mpnll.server.inbound.WebsocketServerSetup;
-import com.broll.mpnll.server.impl.ConnectionSite;
-import com.broll.mpnll.server.impl.LobbySite;
 import com.broll.mpnll.server.lobby.LobbyHandler;
 import com.broll.mpnll.server.site.CloningSitesHandler;
 import com.broll.mpnll.server.site.IUnknownMessageReceiver;
@@ -55,6 +56,7 @@ public class MpnllServer {
     private String ip;
 
     public MpnllServer() {
+        registerMessages(NtLobbyMessagesRegistry::register);
         addSite(new ConnectionSite(userRegistry));
         addSite(new LobbySite());
     }

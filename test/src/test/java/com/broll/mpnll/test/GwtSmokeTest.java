@@ -3,7 +3,6 @@ package com.broll.mpnll.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.server.MpnllServer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -33,11 +32,44 @@ public class GwtSmokeTest {
     private HttpServer webServer;
     private WebDriver browser;
 
+    private static void serveFile(Path root, HttpExchange exchange) throws IOException {
+        String requestPath = exchange.getRequestURI().getPath();
+        if (requestPath.endsWith("/")) {
+            requestPath += "index.html";
+        }
+        Path file = root.resolve(requestPath.substring(1)).normalize();
+        if (!file.startsWith(root) || !Files.isRegularFile(file)) {
+            exchange.sendResponseHeaders(404, -1);
+            exchange.close();
+            return;
+        }
+
+        byte[] content = Files.readAllBytes(file);
+        exchange.getResponseHeaders().set("Content-Type", contentType(file));
+        exchange.sendResponseHeaders(200, content.length);
+        try (OutputStream response = exchange.getResponseBody()) {
+            response.write(content);
+        }
+    }
+
+    private static String contentType(Path file) {
+        String name = file.getFileName().toString();
+        if (name.endsWith(".html")) {
+            return "text/html; charset=utf-8";
+        }
+        if (name.endsWith(".js")) {
+            return "application/javascript; charset=utf-8";
+        }
+        if (name.endsWith(".gif")) {
+            return "image/gif";
+        }
+        return "application/octet-stream";
+    }
+
     @Before
     public void startServers() throws Exception {
         server = new MpnllServer();
         server.setName("GWT smoke server");
-        server.registerMessages(NtLobbyMessagesRegistry::register);
         server.open(0, 0);
         server.getLobbyHandler().openLobby(lobby -> lobby.setName("Browser lobby"));
 
@@ -82,39 +114,5 @@ public class GwtSmokeTest {
         String events = browser.findElement(By.id("sanity-events")).getAttribute("value");
         assertEquals(events, "PASS", status.getAttribute("data-state"));
         assertTrue(events, events.contains("listed 1 lobbies"));
-    }
-
-    private static void serveFile(Path root, HttpExchange exchange) throws IOException {
-        String requestPath = exchange.getRequestURI().getPath();
-        if (requestPath.endsWith("/")) {
-            requestPath += "index.html";
-        }
-        Path file = root.resolve(requestPath.substring(1)).normalize();
-        if (!file.startsWith(root) || !Files.isRegularFile(file)) {
-            exchange.sendResponseHeaders(404, -1);
-            exchange.close();
-            return;
-        }
-
-        byte[] content = Files.readAllBytes(file);
-        exchange.getResponseHeaders().set("Content-Type", contentType(file));
-        exchange.sendResponseHeaders(200, content.length);
-        try (OutputStream response = exchange.getResponseBody()) {
-            response.write(content);
-        }
-    }
-
-    private static String contentType(Path file) {
-        String name = file.getFileName().toString();
-        if (name.endsWith(".html")) {
-            return "text/html; charset=utf-8";
-        }
-        if (name.endsWith(".js")) {
-            return "application/javascript; charset=utf-8";
-        }
-        if (name.endsWith(".gif")) {
-            return "image/gif";
-        }
-        return "application/octet-stream";
     }
 }

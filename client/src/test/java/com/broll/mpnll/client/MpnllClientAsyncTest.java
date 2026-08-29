@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.client.async.ClientFuture;
 import com.broll.mpnll.client.async.ScheduledTask;
 import com.broll.mpnll.client.impl.LobbyLookup;
@@ -31,7 +30,6 @@ public class MpnllClientAsyncTest {
     public void completesOperationFromInboundMessageWithoutBlocking() {
         FakeNativeClient transport = new FakeNativeClient();
         MpnllClient client = new MpnllClient(transport);
-        client.registerMessages(NtLobbyMessagesRegistry::register);
 
         ClientFuture<LobbyLookup> request = client.listLobbies("ws://localhost:8081/");
         AtomicReference<LobbyLookup> response = new AtomicReference<>();
@@ -41,7 +39,6 @@ public class MpnllClientAsyncTest {
         assertNotNull(transport.sent);
 
         MessageRegistryImpl registry = new MessageRegistryImpl();
-        NtLobbyMessagesRegistry.register(registry::register);
         NT_ServerInformation message = NT_ServerInformation.newBuilder()
             .setServerName("test-server")
             .build();
@@ -56,7 +53,6 @@ public class MpnllClientAsyncTest {
     public void waitsForAsynchronousConnectionBeforeSending() {
         FakeNativeClient transport = new FakeNativeClient(false);
         MpnllClient client = new MpnllClient(transport);
-        client.registerMessages(NtLobbyMessagesRegistry::register);
 
         ClientFuture<LobbyLookup> request = client.listLobbies("ws://localhost:8081/");
 
@@ -73,7 +69,6 @@ public class MpnllClientAsyncTest {
     public void failsOperationWhenTimeoutRuns() {
         FakeNativeClient transport = new FakeNativeClient();
         MpnllClient client = new MpnllClient(transport);
-        client.registerMessages(NtLobbyMessagesRegistry::register);
         AtomicReference<Throwable> failure = new AtomicReference<>();
 
         ClientFuture<LobbyLookup> request = client.listLobbies("ws://localhost:8081/");

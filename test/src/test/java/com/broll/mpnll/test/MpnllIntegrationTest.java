@@ -2,7 +2,6 @@ package com.broll.mpnll.test;
 
 import static org.junit.Assert.fail;
 
-import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.client.MpnllClient;
 import com.broll.mpnll.client.MpnllTcpClient;
 import com.broll.mpnll.client.async.ClientFuture;
@@ -25,16 +24,14 @@ import java.util.function.BooleanSupplier;
 public abstract class MpnllIntegrationTest {
 
     private static final long TIMEOUT_SECONDS = 5;
-
+    private final List<MpnllClient> clients = new ArrayList<>();
     protected MpnllServer server;
     protected String serverAddress;
-    private final List<MpnllClient> clients = new ArrayList<>();
 
     @Before
     public void startServer() throws Exception {
         server = new MpnllServer();
         server.setName("TestServer");
-        server.registerMessages(NtLobbyMessagesRegistry::register);
         configureServer(server);
         server.open(0, 0);
         serverAddress = "tcp://127.0.0.1:" + server.getTcpPort();
@@ -60,7 +57,6 @@ public abstract class MpnllIntegrationTest {
             new InMemoryFileAccess("test-auth-" + identity),
             new InMemoryFileAccess()
         );
-        client.registerMessages(NtLobbyMessagesRegistry::register);
         configureClient(client);
         clients.add(client);
         await(client.openAsync(serverAddress));

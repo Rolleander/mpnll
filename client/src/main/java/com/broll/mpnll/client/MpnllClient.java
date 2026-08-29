@@ -1,6 +1,7 @@
 package com.broll.mpnll.client;
 
 import com.broll.mpnll.NetworkException;
+import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.client.async.ClientFuture;
 import com.broll.mpnll.client.async.ClientPromise;
 import com.broll.mpnll.client.async.ScheduledTask;
@@ -52,6 +53,7 @@ public class MpnllClient {
         }
         this.nativeClient = nativeClient;
         configureFileAccess(nativeClient.clientAuthAccess(), nativeClient.lastConnectionAccess());
+        registerMessages(NtLobbyMessagesRegistry::register);
     }
 
     public void configureFileAccess(IFileAccess authFileAccess, IFileAccess lastConnectionFileAccess) {

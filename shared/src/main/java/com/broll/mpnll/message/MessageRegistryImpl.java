@@ -47,10 +47,14 @@ public class MessageRegistryImpl implements MessageRegistry, MessageRegistrySetu
 
     @Override
     public Message parseMessage(byte[] bytes, int type) {
+        Parser parser = parsers.get(type);
+        if (parser == null) {
+            throw new NetworkException("No parser registered for this message type");
+        }
         try {
             return (Message) parsers.get(type).parseFrom(bytes);
         } catch (InvalidProtocolBufferException e) {
-            throw new NetworkException("Failed parsing message", e);
+            throw new NetworkException("Failed parsing message:", e);
         }
     }
 
