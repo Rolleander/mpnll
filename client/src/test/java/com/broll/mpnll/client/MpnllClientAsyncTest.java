@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.client.async.ClientFuture;
 import com.broll.mpnll.client.async.ScheduledTask;
 import com.broll.mpnll.client.impl.LobbyLookup;
@@ -39,6 +40,7 @@ public class MpnllClientAsyncTest {
         assertNotNull(transport.sent);
 
         MessageRegistryImpl registry = new MessageRegistryImpl();
+        NtLobbyMessagesRegistry.register(registry);
         NT_ServerInformation message = NT_ServerInformation.newBuilder()
             .setServerName("test-server")
             .build();
