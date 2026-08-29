@@ -1,11 +1,11 @@
 package com.broll.mpnll.client;
 
+import com.broll.mpnll.ConnectionDefaults;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 final class TcpServerAddress {
-
-    private static final int DEFAULT_PORT = 8080;
 
     final String host;
     final int port;
@@ -19,13 +19,12 @@ final class TcpServerAddress {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Host must not be empty");
         }
-
         String address = value.trim();
         String uriValue = address.contains("://") ? address : "tcp://" + address;
         try {
             URI uri = new URI(uriValue);
             validate(uri, value);
-            int port = uri.getPort() == -1 ? DEFAULT_PORT : uri.getPort();
+            int port = uri.getPort() == -1 ? ConnectionDefaults.DEFAULT_TCP_PORT : uri.getPort();
             return new TcpServerAddress(uri.getHost(), port);
         } catch (URISyntaxException error) {
             throw new IllegalArgumentException("Invalid TCP client address: " + value, error);

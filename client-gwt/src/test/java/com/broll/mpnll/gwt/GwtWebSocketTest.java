@@ -3,6 +3,8 @@ package com.broll.mpnll.gwt;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.broll.mpnll.ConnectionDefaults;
+
 import org.junit.Test;
 
 
@@ -10,27 +12,27 @@ public class GwtWebSocketTest {
 
     @Test
     public void makesBareHostsAbsolute() {
-        assertEquals("ws://gainea.de", GwtWebSocket.normalizeUrl("gainea.de", false));
-        assertEquals("ws://localhost:8081", GwtWebSocket.normalizeUrl("localhost:8081", false));
-        assertEquals("wss://gainea.de", GwtWebSocket.normalizeUrl("gainea.de", true));
+        assertEquals("ws://gainea.de:" + ConnectionDefaults.DEFAULT_WS_PORT, WebsocketUrl.normalizeUrl("gainea.de", false));
+        assertEquals("ws://localhost:8088", WebsocketUrl.normalizeUrl("localhost:8088", false));
+        assertEquals("wss://gainea.de:" + ConnectionDefaults.DEFAULT_WS_PORT, WebsocketUrl.normalizeUrl("gainea.de", true));
     }
 
     @Test
     public void preservesExplicitWebSocketUrls() {
-        assertEquals("ws://localhost:8081/game", GwtWebSocket.normalizeUrl("ws://localhost:8081/game", false));
-        assertEquals("wss://gainea.de/game", GwtWebSocket.normalizeUrl("wss://gainea.de/game", false));
+        assertEquals("ws://localhost:8088/game", WebsocketUrl.normalizeUrl("ws://localhost:8088/game", false));
+        assertEquals("wss://gainea.de:" + ConnectionDefaults.DEFAULT_WS_PORT + "/game", WebsocketUrl.normalizeUrl("wss://gainea.de/game", false));
     }
 
     @Test
     public void convertsHttpUrls() {
-        assertEquals("ws://gainea.de/game", GwtWebSocket.normalizeUrl("http://gainea.de/game", true));
-        assertEquals("wss://gainea.de/game", GwtWebSocket.normalizeUrl("https://gainea.de/game", false));
+        assertEquals("ws://gainea.de:" + ConnectionDefaults.DEFAULT_WS_PORT + "/game", WebsocketUrl.normalizeUrl("http://gainea.de/game", true));
+        assertEquals("wss://gainea.de:" + ConnectionDefaults.DEFAULT_WS_PORT + "/game", WebsocketUrl.normalizeUrl("https://gainea.de/game", false));
     }
 
     @Test
     public void rejectsEmptyHosts() {
         try {
-            GwtWebSocket.normalizeUrl("  ", false);
+            WebsocketUrl.normalizeUrl("  ", false);
             fail("exception not thrown");
         } catch (IllegalArgumentException ignored) {
 
@@ -40,7 +42,7 @@ public class GwtWebSocketTest {
     @Test
     public void rejectsUnsupportedSchemes() {
         try {
-            GwtWebSocket.normalizeUrl("tcp://gainea.de:8080", false);
+            WebsocketUrl.normalizeUrl("tcp://gainea.de:8080", false);
             fail("exception not thrown");
         } catch (IllegalArgumentException ignored) {
 

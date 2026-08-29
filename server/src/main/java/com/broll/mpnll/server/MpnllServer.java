@@ -1,5 +1,7 @@
 package com.broll.mpnll.server;
 
+import com.broll.mpnll.ConnectionDefaults;
+import com.broll.mpnll.NetworkException;
 import com.broll.mpnll.NtLobbyMessagesRegistry;
 import com.broll.mpnll.message.MessageRegistryImpl;
 import com.broll.mpnll.message.MessageRegistrySetup;
@@ -118,7 +120,11 @@ public class MpnllServer {
         sitesHandler.setUnknownMessageReceiver(receiver);
     }
 
-    public void open(int tcpPort, int websocketPort) throws InterruptedException {
+    public void open() {
+        open(ConnectionDefaults.DEFAULT_TCP_PORT, ConnectionDefaults.DEFAULT_WS_PORT);
+    }
+
+    public void open(int tcpPort, int websocketPort) {
         if (bossGroup != null && !bossGroup.isTerminated()) {
             return;
         }
@@ -131,8 +137,12 @@ public class MpnllServer {
             messageRegistry,
             this::receivedMessage
         );
-        tcpChannel = TcpServerSetup.init(context, tcpPort);
-        wsChannel = WebsocketServerSetup.init(context, websocketPort);
+        try {
+            tcpChannel = TcpServerSetup.init(context, tcpPort);
+            wsChannel = WebsocketServerSetup.init(context, websocketPort);
+        } catch (InterruptedException e) {
+            throw new NetworkException("Failed to open server", e);
+        }
         ip = findLocalIp();
         open = true;
         Log.info("Server listening on all interfaces (TCP {}, WebSocket {})",
