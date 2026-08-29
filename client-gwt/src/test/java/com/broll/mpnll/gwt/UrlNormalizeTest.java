@@ -8,7 +8,7 @@ import com.broll.mpnll.ConnectionDefaults;
 import org.junit.Test;
 
 
-public class GwtWebSocketTest {
+public class UrlNormalizeTest {
 
     @Test
     public void makesBareHostsAbsolute() {

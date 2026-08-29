@@ -60,7 +60,7 @@ public class UpdatePublisher {
         sendUpdateExcept(user);
     }
 
-    private void sendUpdate() {
+    public void sendUpdate() {
         sendUpdateExcept(null);
     }
 

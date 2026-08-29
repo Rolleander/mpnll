@@ -2,11 +2,14 @@ package com.broll.mpnll.server.lobby;
 
 import com.broll.mpnll.message.MessageRegistry;
 import com.broll.mpnll.server.user.User;
+import com.broll.mpnll.server.user.BotUser;
 import com.google.protobuf.Any;
+import com.google.protobuf.Message;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class LobbyHandler {
@@ -16,6 +19,7 @@ public class LobbyHandler {
     private LobbyRegistry registry = new LobbyRegistryImpl();
     private MessageRegistry messageRegistry;
     private LobbyCreationReceiver<?> lobbyCreationReceiver;
+    private final AtomicInteger botIds = new AtomicInteger(-1);
 
     public LobbyHandler(MessageRegistry messageRegistry) {
         this.messageRegistry = messageRegistry;
@@ -39,6 +43,21 @@ public class LobbyHandler {
 
     public <S> void acceptLobbyCreation(Class<S> settingsType, LobbyCreationCallback<S> callback) {
         lobbyCreationReceiver = new LobbyCreationReceiver<>(settingsType, callback);
+    }
+
+    public void acceptLobbyCreation(LobbyCreationCallback<Any> callback) {
+        lobbyCreationReceiver = new LobbyCreationReceiver<>(Any.class, callback);
+    }
+
+    public User createBot(Lobby lobby, String name, Object data) {
+        return createBot(lobby, name, data, null);
+    }
+
+    public User createBot(Lobby lobby, String name, Object data, Consumer<Message> messageReceiver) {
+        BotUser bot = new BotUser(botIds.getAndDecrement(), name);
+        bot.setMessageReceiver(messageReceiver);
+        bot.setData(data);
+        return lobby.addUser(bot) ? bot : null;
     }
 
     public Lobby requestLobbyCreation(User requester, String lobbyName, Any settings) {
@@ -100,7 +119,9 @@ public class LobbyHandler {
         }
 
         boolean allowCreation(User requester, Lobby lobby, Any settings) {
-            S parsedSettings = messageRegistry.unpack(settings, settingsType);
+            S parsedSettings = settingsType == Any.class
+                ? (S) settings
+                : messageRegistry.unpack(settings, settingsType);
             return callback.allowCreation(requester, lobby, parsedSettings);
         }
     }

@@ -39,6 +39,7 @@ public class Lobby {
     UserSettingsBuilder userSettingsBuilder;
     MessageRegistry messageRegistry;
     Object data;
+    LobbyChatHandler chatHandler;
     private SharedData sharedData = new SharedData();
 
     Lobby(LobbyHandler lobbyHandler, MessageRegistry messageRegistry) {
@@ -50,7 +51,13 @@ public class Lobby {
 
     public void sendToAll(Message message) {
         byte[] data = MessageUtils.toMessageBytes(messageRegistry, message);
-        getOnlineUsers().forEach(it -> it.send(data));
+        getOnlineUsers().forEach(it -> {
+            if (it.isBot()) {
+                it.send(message);
+            } else {
+                it.send(data);
+            }
+        });
     }
 
     public synchronized void close() {
@@ -207,6 +214,14 @@ public class Lobby {
 
     public Object getData() {
         return data;
+    }
+
+    public LobbyChatHandler getChatHandler() {
+        return chatHandler;
+    }
+
+    public void setChatHandler(LobbyChatHandler chatHandler) {
+        this.chatHandler = chatHandler;
     }
 
     public void setData(Object data) {

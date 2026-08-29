@@ -46,6 +46,7 @@ public class MemberTransactions {
         user.getListeners().forEach(it -> it.joinedLobby(user, lobby));
         user.addListener(userListenerForwarder);
         lobby.usersListeners.forEach(it -> it.userJoined(lobby, user));
+        lobby.lobbyHandler.usersListeners.forEach(it -> it.userJoined(lobby, user));
         return true;
     }
 
@@ -73,6 +74,7 @@ public class MemberTransactions {
         Log.info("Removed user {} from lobby {}", user, lobby);
         user.getListeners().forEach(it -> it.leftLobby(user, lobby));
         lobby.usersListeners.forEach(it -> it.userLeft(lobby, user));
+        lobby.lobbyHandler.usersListeners.forEach(it -> it.userLeft(lobby, user));
         checkAutoClose();
         return true;
     }

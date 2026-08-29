@@ -20,7 +20,7 @@ public class SharedField {
     public SharedField(NetworkSite site, Field field, ShareLevel shareLevel) {
         this.site = site;
         this.field = field;
-        this.dataClass = field.getClass();
+        this.dataClass = field.getType();
         this.shareLevel = shareLevel;
         this.key = site.getClass().getName() + ":" + field.getType().getName() + ":" + field.getName();
     }

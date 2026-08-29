@@ -15,6 +15,10 @@ public class LobbySite extends NetworkSite {
     @PackageReceiver
     @ConnectionRestriction(RestrictionType.IN_LOBBY)
     private void receive(NT_ChatMessage chatMessage) {
+        if (getLobby().getChatHandler() != null
+            && getLobby().getChatHandler().handle(getLobby(), getUser(), chatMessage.getMessage())) {
+            return;
+        }
         NT_ChatMessage message = NT_ChatMessage.newBuilder(chatMessage).setFrom(getUser().getId()).build();
         getLobby().getOnlineUsers().stream().filter(it -> it != getUser()).forEach(it -> it.send(message));
     }

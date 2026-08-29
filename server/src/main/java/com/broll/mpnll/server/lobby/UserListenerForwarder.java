@@ -28,16 +28,20 @@ class UserListenerForwarder implements UserListener {
     @Override
     public void switchedLobby(User user, Lobby from, Lobby to) {
         from.usersListeners.forEach(it -> it.userLeft(lobby, user));
+        from.lobbyHandler.usersListeners.forEach(it -> it.userLeft(lobby, user));
         to.usersListeners.forEach(it -> it.userJoined(lobby, user));
+        to.lobbyHandler.usersListeners.forEach(it -> it.userJoined(lobby, user));
     }
 
     @Override
     public void disconnected(User user) {
         lobby.usersListeners.forEach(it -> it.userDisconnected(lobby, user));
+        lobby.lobbyHandler.usersListeners.forEach(it -> it.userDisconnected(lobby, user));
     }
 
     @Override
     public void reconnected(User user) {
         lobby.usersListeners.forEach(it -> it.userReconnected(lobby, user));
+        lobby.lobbyHandler.usersListeners.forEach(it -> it.userReconnected(lobby, user));
     }
 }
