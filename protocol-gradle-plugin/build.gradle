@@ -10,7 +10,7 @@ def protobufPluginVersion = versionCatalog.findVersion('protobuf-plugin').get().
 dependencies {
   implementation "com.google.protobuf:protobuf-gradle-plugin:${protobufPluginVersion}"
   testImplementation gradleTestKit()
-  testImplementation 'junit:junit:4.13.2'
+  testImplementation libs.junit
 }
 
 gradlePlugin {

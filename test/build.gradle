@@ -5,7 +5,7 @@ plugins {
 dependencies {
   testImplementation project(':server')
   testImplementation project(':client-java')
-  testImplementation 'junit:junit:4.13.2'
+  testImplementation libs.junit
   testImplementation 'org.seleniumhq.selenium:selenium-java:4.47.0'
 }
 

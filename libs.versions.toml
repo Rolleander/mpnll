@@ -11,6 +11,7 @@ commons-io = "2.6"
 commons-lang = "3.0"
 commons-collections = "4.0"
 kryo = "5.6.2"
+junit = "4.13.2"
 
 [libraries]
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
@@ -28,7 +29,7 @@ commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang" }
 commons-collections = { module = "org.apache.commons:commons-collections4", version.ref = "commons-collections" }
 kryo = { module = "com.esotericsoftware.kryo:kryo5", version.ref = "kryo" }
-
+junit = { module = "junit:junit", version.ref = "junit" }
 
 gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
 gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }

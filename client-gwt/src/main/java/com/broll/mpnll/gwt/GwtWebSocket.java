@@ -13,8 +13,8 @@ public class GwtWebSocket {
     private Listener listener;
 
     public void open(String url) {
-        this.url = url;
-        jsWebSocket = createWebSocket(url);
+        this.url = normalizeUrl(url, isSecurePage());
+        jsWebSocket = createWebSocket(this.url);
         if (listener != null) {
             installListener();
         }
@@ -51,6 +51,37 @@ public class GwtWebSocket {
             socket.binaryType = "arraybuffer";
             return socket;
         }-*/;
+
+    private native boolean isSecurePage() /*-{
+            return $wnd.location.protocol === "https:";
+        }-*/;
+
+    static String normalizeUrl(String value, boolean securePage) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("WebSocket host must not be empty");
+        }
+
+        String url = value.trim();
+        String lowerUrl = url.toLowerCase();
+        if (lowerUrl.startsWith("ws://") || lowerUrl.startsWith("wss://")) {
+            return url;
+        }
+        if (lowerUrl.startsWith("http://")) {
+            return "ws://" + url.substring("http://".length());
+        }
+        if (lowerUrl.startsWith("https://")) {
+            return "wss://" + url.substring("https://".length());
+        }
+
+        String scheme = securePage ? "wss:" : "ws:";
+        if (url.startsWith("//")) {
+            return scheme + url;
+        }
+        if (url.contains("://")) {
+            throw new IllegalArgumentException("Unsupported WebSocket URL scheme: " + value);
+        }
+        return scheme + "//" + url;
+    }
 
     private native void sendMessage(JavaScriptObject socket, byte[] message) /*-{
             var arrayBuffer = new ArrayBuffer(message.length);

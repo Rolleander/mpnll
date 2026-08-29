@@ -5,6 +5,7 @@ dependencies {
   api libs.protobuf.gwt
   implementation libs.gwt.dev
   implementation libs.gwt.user
+  testImplementation libs.junit
 }
 
 tasks.named('jar') {
@@ -33,10 +34,10 @@ tasks.register('gwtCompileSmoke', JavaExec) {
   mainClass = 'com.google.gwt.dev.Compiler'
   classpath = files(gwtSmokeSource, gwtSuperSource, sourceSets.main.java.srcDirs, clientSource) + sourceSets.main.runtimeClasspath
   args '-war', gwtSmokeWar.get().asFile.absolutePath,
-      '-style', 'PRETTY',
-      '-draftCompile',
-      '-strict',
-      'com.broll.mpnll.gwt.smoke.SmokeTest'
+    '-style', 'PRETTY',
+    '-draftCompile',
+    '-strict',
+    'com.broll.mpnll.gwt.smoke.SmokeTest'
 }
 
 tasks.named('check') {
@@ -48,7 +49,7 @@ tasks.register('gwtSmoke', Exec) {
   description = 'Compiles and serves the GWT browser smoke test at http://localhost:8888/smoke/.'
   dependsOn gwtCompileSmoke
   commandLine 'python3', '-m', 'http.server', '8888',
-      '--directory', gwtSmokeWar.get().asFile.absolutePath
+    '--directory', gwtSmokeWar.get().asFile.absolutePath
   doFirst {
     logger.lifecycle('GWT smoke test: http://localhost:8888/smoke/')
     logger.lifecycle('Start :server:start in another terminal; the page runs the test automatically.')

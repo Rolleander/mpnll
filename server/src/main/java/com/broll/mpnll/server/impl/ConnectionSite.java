@@ -159,7 +159,7 @@ public class ConnectionSite extends NetworkSite {
     private boolean checkJoiningClientVersion(String clientVersion) {
         String version = getServer().getVersion();
         if (!Objects.equals(version, clientVersion)) {
-            Log.warn("User {} version does not match server!", getUser());
+            Log.warn("Client version '{}' does not match server version '{}'!", clientVersion, version);
             respond(NT_LobbyNoJoin.newBuilder()
                 .setReason("Version mismatch with server: " + version).build());
             return false;
