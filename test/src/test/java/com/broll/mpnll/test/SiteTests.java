@@ -8,8 +8,10 @@ import com.broll.mpnll.client.site.MessageReceiverRegistry;
 import com.broll.mpnll.server.MpnllServer;
 import com.broll.mpnll.server.site.NetworkSite;
 import com.broll.mpnll.server.site.PackageReceiver;
+import com.broll.mpnll.server.utils.Autoshared;
 import com.broll.mpnll.server.utils.ConnectionRestriction;
 import com.broll.mpnll.server.utils.RestrictionType;
+import com.broll.mpnll.server.utils.ShareLevel;
 import com.google.protobuf.StringValue;
 
 import org.junit.Before;
@@ -96,6 +98,16 @@ public class SiteTests extends MpnllIntegrationTest {
         assertEquals(TEST_MESSAGE, unknown.get(5, TimeUnit.SECONDS));
     }
 
+    @Test
+    public void injectsAutosharedFieldsIntoClonedSite() throws Exception {
+        CompletableFuture<Integer> received = new CompletableFuture<>();
+        server.addSite(new AutosharedServerSite(received));
+
+        client.send(TEST_MESSAGE);
+
+        assertEquals(Integer.valueOf(1), received.get(5, TimeUnit.SECONDS));
+    }
+
     public static class TestServerSite extends NetworkSite {
 
         private CompletableFuture<StringValue> received;
@@ -112,5 +124,29 @@ public class SiteTests extends MpnllIntegrationTest {
         public void received(StringValue message) {
             received.complete(message);
         }
+    }
+
+    public static class AutosharedServerSite extends NetworkSite {
+
+        @Autoshared(ShareLevel.SERVER)
+        private SharedCounter counter;
+        private CompletableFuture<Integer> received;
+
+        public AutosharedServerSite() {
+        }
+
+        AutosharedServerSite(CompletableFuture<Integer> received) {
+            this.received = received;
+        }
+
+        @PackageReceiver
+        @ConnectionRestriction(RestrictionType.NONE)
+        public void received(StringValue message) {
+            received.complete(++counter.value);
+        }
+    }
+
+    public static class SharedCounter {
+        private int value;
     }
 }

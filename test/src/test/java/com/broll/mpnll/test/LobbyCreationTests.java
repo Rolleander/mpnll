@@ -58,6 +58,20 @@ public class LobbyCreationTests extends MpnllIntegrationTest {
     }
 
     @Test
+    public void assignsOwnerWhenCreatorIdIsNotZero() throws Exception {
+        MpnllClient firstClient = newClient("first-owner");
+        await(firstClient.createLobby("First", null));
+        MpnllClient secondClient = newClient("second-owner");
+
+        Lobby lobby = await(secondClient.createLobby("Second", null));
+
+        assertTrue(lobby.getMyUserId() > 0);
+        assertSame(lobby.getMyUser(), lobby.getOwner());
+        assertTrue(lobby.getMyUser().isMe());
+        assertTrue(lobby.getOwner().isMe());
+    }
+
+    @Test
     public void createsLobbyWithSettings() throws Exception {
         Settings settings = new Settings(5, "coolLobby");
         MpnllClient client = newClient("settings");

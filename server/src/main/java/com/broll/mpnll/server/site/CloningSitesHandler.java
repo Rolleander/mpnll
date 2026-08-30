@@ -27,7 +27,11 @@ public class CloningSitesHandler extends SitesHandler {
     }
 
     private synchronized <O> O clone(O o) {
-        return kryo.copyShallow(o);
+        O clone = kryo.copyShallow(o);
+        if (clone instanceof NetworkSite) {
+            ((NetworkSite) clone).rebindSharedFields();
+        }
+        return clone;
     }
 
     @Override
@@ -106,4 +110,3 @@ public class CloningSitesHandler extends SitesHandler {
         }
     }
 }
-

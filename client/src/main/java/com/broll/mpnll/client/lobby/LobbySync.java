@@ -64,6 +64,7 @@ public final class LobbySync {
         user.setName(info.getName());
         user.setSettings(lobby.getClient().getMessageRegistry().unpack(info.getSettings()));
         user.setBot(info.getBot());
+        user.setMe(user.getId() == lobby.getMyUserId());
     }
 
     public static void syncInfo(LobbyInfo lobby, NT_LobbyInformation info) {

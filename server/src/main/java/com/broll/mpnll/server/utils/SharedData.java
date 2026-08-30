@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 
 public class SharedData {
@@ -52,7 +53,7 @@ public class SharedData {
 
     private Object instantiateClass(Class dataClass, NetworkSite site) {
         try {
-            if (dataClass.isMemberClass()) {
+            if (dataClass.isMemberClass() && !Modifier.isStatic(dataClass.getModifiers())) {
                 //inner class default constructor with outer object
                 Constructor constructor = dataClass.getDeclaredConstructors()[0];
                 constructor.setAccessible(true);

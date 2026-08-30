@@ -37,6 +37,11 @@ public abstract class NetworkSite {
         );
     }
 
+    final void rebindSharedFields() {
+        sharedFields = new ArrayList<>();
+        scanSharedFields();
+    }
+
     private void initSharedField(Field field, Autoshared shared) {
         field.setAccessible(true);
         SharedField sharedField = new SharedField(

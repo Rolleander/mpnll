@@ -29,6 +29,9 @@ public class LobbyMessageBuilder {
         NT_LobbyUpdate.Builder update = NT_LobbyUpdate.newBuilder();
         update.setLobbyInfo(lobbyInfo());
         update.addAllPlayers(lobby.getAllUsers().stream().map(User::nt).collect(Collectors.toList()));
+        if (lobby.owner != null) {
+            update.setOwner(lobby.owner.getId());
+        }
         return update.build();
     }
 
