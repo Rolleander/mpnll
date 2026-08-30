@@ -19,7 +19,7 @@ public class LobbyMessageBuilder {
         NT_LobbyInformation.Builder info = NT_LobbyInformation.newBuilder();
         info.setLobbyId(lobby.id);
         info.setLobbyName(lobby.name);
-        info.setPlayerCount(lobby.getPlayerCount());
+        info.setPlayerCount(lobby.getUsersCount());
         info.setPlayerLimit(lobby.playerLimit);
         info.setSettings(buildSettings());
         return info.build();

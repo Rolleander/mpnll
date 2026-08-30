@@ -216,16 +216,16 @@ public class Lobby {
         return data;
     }
 
+    public void setData(Object data) {
+        this.data = data;
+    }
+
     public LobbyChatHandler getChatHandler() {
         return chatHandler;
     }
 
     public void setChatHandler(LobbyChatHandler chatHandler) {
         this.chatHandler = chatHandler;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
     }
 
     public LobbySettingsBuilder getLobbySettingsBuilder() {
@@ -252,7 +252,7 @@ public class Lobby {
         return !locked && !hidden;
     }
 
-    public int getPlayerCount() {
+    public int getUsersCount() {
         return getActiveUsers().size();
     }
 

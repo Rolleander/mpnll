@@ -15,6 +15,22 @@ import org.junit.Test;
 
 public class LobbyCreationTests extends MpnllIntegrationTest {
 
+    private static void registerSettingsMapping(MessageRegistrySetup registry) {
+        registry.registerMapping(
+            Settings.class,
+            "google.protobuf.Struct",
+            Struct.getDefaultInstance(),
+            settings -> Struct.newBuilder()
+                .putFields("name", Value.newBuilder().setStringValue(settings.name).build())
+                .putFields("maxPlayers", Value.newBuilder().setNumberValue(settings.maxPlayers).build())
+                .build(),
+            message -> new Settings(
+                (int) message.getFieldsOrThrow("maxPlayers").getNumberValue(),
+                message.getFieldsOrThrow("name").getStringValue()
+            )
+        );
+    }
+
     @Override
     protected void configureServer(MpnllServer server) {
         server.registerMessages(LobbyCreationTests::registerSettingsMapping);
@@ -53,7 +69,7 @@ public class LobbyCreationTests extends MpnllIntegrationTest {
 
         assertEquals("Tester's Lobby", lobby.getName());
         assertEquals(lobby.getMyUser(), lobby.getOwner());
-        assertEquals(serverLobby.getPlayerCount(), lobby.getUserCount());
+        assertEquals(serverLobby.getUsersCount(), lobby.getUserCount());
         assertSame(serverLobby.getOwner(), serverLobby.findMember(lobby.getMyUserId()));
     }
 
@@ -87,22 +103,6 @@ public class LobbyCreationTests extends MpnllIntegrationTest {
         assertEquals(settings.maxPlayers, returnedSettings.maxPlayers);
         assertEquals("coolLobby", serverLobby.getName());
         assertEquals(5, serverLobby.getPlayerLimit());
-    }
-
-    private static void registerSettingsMapping(MessageRegistrySetup registry) {
-        registry.registerMapping(
-            Settings.class,
-            "google.protobuf.Struct",
-            Struct.getDefaultInstance(),
-            settings -> Struct.newBuilder()
-                .putFields("name", Value.newBuilder().setStringValue(settings.name).build())
-                .putFields("maxPlayers", Value.newBuilder().setNumberValue(settings.maxPlayers).build())
-                .build(),
-            message -> new Settings(
-                (int) message.getFieldsOrThrow("maxPlayers").getNumberValue(),
-                message.getFieldsOrThrow("name").getStringValue()
-            )
-        );
     }
 
     private static final class Settings {
